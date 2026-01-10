@@ -62,13 +62,15 @@ class RecipePipeline:
             logger.debug("EXITING: suggest_recipes with error")
             raise
 
-    def generate_final_recipe(self, suggestion_title: str, preference: Optional[str], request_id: str) -> FinalRecipe:
+    def generate_final_recipe(self, suggestion_title: str, ingredients: List[Ingredient], preference: Optional[str], request_id: str) -> FinalRecipe:
         logger = get_request_logger(request_id)
         logger.debug(f"ENTERING: generate_final_recipe for {suggestion_title}, request_id={request_id}")
         logger.info(f"Generating final recipe for: {suggestion_title}")
 
+        ingredient_names = ", ".join([ing.name for ing in ingredients])
         prompt = FINAL_RECIPE_PROMPT.format(
             suggestion=suggestion_title,
+            ingredients=ingredient_names,
             preference=preference or "None"
         )
 
@@ -81,6 +83,7 @@ class RecipePipeline:
                     'response_schema': FinalRecipe,
                 }
             )
+            logger.info(f"Final recipe generated: {response.parsed.title}")
             if not response.parsed:
                 raise ValueError("Empty parsed response from Gemini")
             
