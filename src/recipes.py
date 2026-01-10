@@ -33,6 +33,7 @@ class RecipePipeline:
 
     def suggest_recipes(self, ingredients: List[Ingredient], preference: Optional[str], request_id: str) -> RecipeSuggestionList:
         logger = get_request_logger(request_id)
+        logger.debug(f"ENTERING: suggest_recipes with request_id={request_id}, preference={preference}")
         logger.info(f"Generating recipe suggestions with preference: {preference}")
 
         ingredient_names = ", ".join([ing.name for ing in ingredients])
@@ -52,13 +53,17 @@ class RecipePipeline:
             )
             if not response.parsed:
                 raise ValueError("Empty parsed response from Gemini")
+            
+            logger.debug(f"EXITING: suggest_recipes with {len(response.parsed.suggestions)} suggestions")
             return response.parsed
         except Exception as e:
             logger.error(f"Error suggesting recipes: {str(e)}")
+            logger.debug("EXITING: suggest_recipes with error")
             raise
 
     def generate_final_recipe(self, suggestion_title: str, preference: Optional[str], request_id: str) -> FinalRecipe:
         logger = get_request_logger(request_id)
+        logger.debug(f"ENTERING: generate_final_recipe for {suggestion_title}, request_id={request_id}")
         logger.info(f"Generating final recipe for: {suggestion_title}")
 
         prompt = FINAL_RECIPE_PROMPT.format(
@@ -77,7 +82,10 @@ class RecipePipeline:
             )
             if not response.parsed:
                 raise ValueError("Empty parsed response from Gemini")
+            
+            logger.debug(f"EXITING: generate_final_recipe for {response.parsed.title}")
             return response.parsed
         except Exception as e:
             logger.error(f"Error generating final recipe: {str(e)}")
+            logger.debug("EXITING: generate_final_recipe with error")
             raise

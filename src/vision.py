@@ -23,6 +23,7 @@ class VisionPipeline:
 
     def extract_ingredients(self, image: Image.Image, request_id: str) -> IngredientList:
         logger = get_request_logger(request_id)
+        logger.debug(f"ENTERING: extract_ingredients with request_id={request_id}")
         logger.info("Starting ingredient extraction from image")
 
         try:
@@ -40,7 +41,9 @@ class VisionPipeline:
                 raise ValueError("Failed to extract ingredients from image")
 
             logger.info(f"Successfully extracted {len(response.parsed.ingredients)} ingredients")
+            logger.debug(f"EXITING: extract_ingredients with {len(response.parsed.ingredients)} items")
             return response.parsed
         except Exception as e:
             logger.error(f"Error during extraction: {str(e)}")
+            logger.debug("EXITING: extract_ingredients with error")
             raise

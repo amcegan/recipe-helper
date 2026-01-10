@@ -20,6 +20,7 @@ def render_ui():
     
     request_id = st.session_state.request_id
     logger = get_request_logger(request_id)
+    logger.debug(f"ENTERING: render_ui with request_id={request_id}")
 
     api_key = os.getenv("GEMINI_API_KEY", "").strip()
     if not api_key:
@@ -110,3 +111,5 @@ def render_ui():
             if recipe.notes:
                 st.subheader("Chef's Notes")
                 st.write(recipe.notes)
+    
+    logger.debug("EXITING: render_ui")
