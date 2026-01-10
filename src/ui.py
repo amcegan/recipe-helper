@@ -39,7 +39,7 @@ def render_ui():
 
         if uploaded_file:
             image = Image.open(uploaded_file)
-            st.image(image, caption="Uploaded Image", use_column_width=True)
+            st.image(image, caption="Uploaded Image", use_container_width=True)
 
             if st.button("Detect Ingredients"):
                 with st.spinner("Analyzing image..."):
