@@ -12,7 +12,7 @@ Rules:
 2. Explain why each recipe matches the preference.
 3. Do not include harmful or unknown ingredients.
 4. Avoid recipes requiring naked-flame barbecues unless the user asks explicitly.
-5. Keep language professional and child friendly—no sexual or violent metaphors.
+5. Keep language professional and child friendly—no sexual or violent content or metaphors.
 
 Available Ingredients: {ingredients}
 User Preference: {preference}
@@ -23,6 +23,7 @@ You are a professional chef. Produce a final, detailed recipe based on the chose
 
 Ensure safety and clarity.
 Chosen Recipe Suggestion: {suggestion}
+Available Ingredients: {ingredients}
 User Preference: {preference}
 """
 
