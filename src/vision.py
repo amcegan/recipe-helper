@@ -4,18 +4,8 @@ from PIL import Image
 from typing import List, Optional
 from src.schemas import IngredientList
 from src.logger import get_request_logger
+from src.prompts import INGREDIENT_EXTRACTION_PROMPT
 
-INGREDIENT_EXTRACTION_PROMPT = """
-You are an ingredient-extraction engine.
-Analyze the provided image and extract a list of all visible food ingredients.
-
-Rules:
-1. No speculation: label uncertain items as "unknown" rather than guessing names.
-2. No brands or inferred items (avoid hallucinating missing spices).
-3. Confidence required for each ingredient (0.0 to 1.0).
-4. Flag harmful or unfamiliar items; for example, identify unknown mushrooms as "unknown".
-5. Culinary context only: exclude any non-food or suggestive content.
-"""
 
 class VisionPipeline:
     def __init__(self, api_key: str):

@@ -3,30 +3,8 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from typing import List, Optional
 from src.schemas import Ingredient, RecipeSuggestionList, FinalRecipe
 from src.logger import get_request_logger
+from src.prompts import RECIPE_SUGGESTION_PROMPT, FINAL_RECIPE_PROMPT
 
-RECIPE_SUGGESTION_PROMPT = """
-You are a professional chef and nutritionist.
-Given the ingredient list and an optional user preference, return a list (3–5 elements) of recipes.
-
-Rules:
-1. Distinguish clearly between available and missing ingredients.
-2. Explain why each recipe matches the preference.
-3. Do not include harmful or unknown ingredients.
-4. Avoid recipes requiring naked-flame barbecues unless the user asks explicitly.
-5. Keep language professional and child friendly—no sexual or violent content or metaphors.
-
-Available Ingredients: {ingredients}
-User Preference: {preference}
-"""
-
-FINAL_RECIPE_PROMPT = """
-You are a professional chef. Produce a final, detailed recipe based on the chosen suggestion and user preference.
-
-Ensure safety and clarity.
-Chosen Recipe Suggestion: {suggestion}
-Available Ingredients: {ingredients}
-User Preference: {preference}
-"""
 
 class RecipePipeline:
     def __init__(self, api_key: str):
