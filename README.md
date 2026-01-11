@@ -1,4 +1,6 @@
 # Recipe Helper
+This project was created using Google's AntiGravity AI agent. 
+The full project prompt can be found in [PROJECT_PROMPT.md](PROJECT_PROMPT.md).
 
 Recipe Helper is an AI-powered culinary companion that transforms photos of your ingredients into delicious recipes. 
 Using Google's Gemini 2.0 Flash model, the application detects ingredients with high precision and suggests creative, safe, and personalized recipes.
@@ -13,6 +15,16 @@ The application is built with a modular, "safety-first" architecture designed fo
 -   **Centralized Prompts**: LLM instructions are managed in a single `prompts.py` file for consistent AI behavior and easy calibration.
 -   **Traceability**: A custom logging adapter injects unique `request_id`s into every log message, facilitating easy debugging of specific user sessions.
 
+## Project Documentation
+
+| File | Audience | Purpose |
+| :--- | :--- | :--- |
+| **[README.md](README.md)** | Users / Devs | Primary project overview, setup, and execution guide. |
+| **[PROJECT_PROMPT.md](PROJECT_PROMPT.md)**| Devs | Comprehensive blueprint for recreating this project from scratch. |
+| **[.agent/Agents.md](.agent/Agents.md)** | AI Assistants | Agent Context, architectural constraints, safety standards, and coding conventions for AI. |
+| **[.agent/rules/python-standards.md](.agent/rules/python-standards.md)** | Devs / AI | Specific coding standards and best practices for Python. |
+| **[.agent/workflows/generate-unit-tests.md](.agent/workflows/generate-unit-tests.md)** | Devs / AI |  Generate/Run unit tests for the project. |
+
 ## Setup Instructions
 
 ### 1. Prerequisites
@@ -24,6 +36,7 @@ Copy the .env.example file to .env and set your API key:
 Edit `.env` and set:
 - `GEMINI_API_KEY`: Your key from [Google AI Studio](https://aistudio.google.com/). A paid account is recommended.
 - `LOG_LEVEL`: (Optional) Set to `DEBUG` for detailed trace logs or `INFO` for standard output.
+- `INGREDIENT_CONFIDENCE_THRESHOLD`: (Optional) Minimum certainty score (0.0 to 1.0) to include an ingredient. Default is 0.5.
 
 ### 3. Dependency Installation
 We recommend using a virtual environment:
@@ -40,7 +53,7 @@ Run the Streamlit server from the project root:
 ```bash
 streamlit run main.py
 ```
-Wait for the local URL (usually `http://localhost:8501`) to appear and open it in your browser.
+If it doesn't open automatically, wait for the local URL (usually `http://localhost:8501`) to appear and open it in your browser.
 
 ### Run Tests
 The project includes a comprehensive suite of unit tests covering vision, recipes, and utility logic:
