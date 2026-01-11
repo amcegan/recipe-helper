@@ -167,6 +167,11 @@ The tests mock external API calls so they do not require network access or valid
 
 ## Part B Reflection
 
-The Part B challenge required exploring a new GenAI technology and documenting the learning process. In this version we chose **LangGraph**, a framework for building agent workflows, and integrated an external weather API. See LEARNING.md for a detailed reflection covering resources used, challenges (such as handling images in a serialisable state and validating nested JSON from wttr.in), and insights on how agent‑style orchestration changes the design compared with a linear pipeline. This documentation satisfies the requirement to share what was learned and to enable other developers to extend the work.
+This project fulfills the "Learning & Exploration Challenge" of the technical interview assessment. 
+- **Google Antigravity**: While I had used this tool for small personal projects, this assessment allowed me to apply it to a production-like scenario.
+- **Gemini 2.0 Flash**: I chose this model to explore its **multimodal ease of use**, specifically how it simplifies architecture by handling both vision and complex reasoning in a single call with structured JSON output.
+- **LangGraph**: I had used LangGraph previously, but this project was my first opportunity to implement the newer **Human-in-the-Loop (HITL)** features, using interrupts to guide the user flow.
+
+See `LEARNING.md` for a deeper dive into these technical choices and the lessons learned.
 
 ---

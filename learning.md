@@ -1,18 +1,23 @@
 # Learning & Exploration Reflection (Part B)
 
-This document captures the learning process, challenges and insights gained while refactoring the recipe helper project to satisfy the Part B “Learning & Exploration Challenge” of the technical assessment. The goal was to explore a GenAI technology not previously used and to integrate additional data sources into the pipeline.
+This document captures the learning process, challenges and insights gained while refactoring the recipe helper project to satisfy the Part B “Learning & Exploration Challenge” of the technical assessment.
+
+## Context & Motivation
+
+While I had used **Google Antigravity** in the past for small personal projects, I had not yet used it for a serious, production-style application. This assessment provided the perfect opportunity to deepen that knowledge.
+
+Additionally, this was my **first time using the Gemini 2.0 Flash model**. I wanted to explore it specifically for its **ease of use** in two key areas:
+1.  **Unified Multimodal support**: Eliminating the need for separate OCR/vision and text models simplified the architecture significantly.
+2.  **Native JSON Output**: The ability to enforce Pydantic schemas via `response_schema` made validation straightforward, avoiding the "retry-parse-fail" loops common with older LLMs.
 
 ## Why LangGraph?
 
-The core version of the application used a linear sequence of function calls: extract ingredients → suggest recipes → generate final recipe. To satisfy the agent‑framework challenge, I adopted **LangGraph**, which provides a declarative way to build stateful graphs with checkpointing and human‑in‑the‑loop pauses. This allowed me to:
+I have used LangGraph in previous projects, but I had strictly used its older, linear graph features. I had **not** yet utilized the newer **Human-in-the-Loop (HITL)** capabilities, specifically the `interrupt_before` and functionality.
 
-* Separate the workflow into discrete nodes with single responsibilities.
+To satisfy the agent-framework challenge, I refactored the linear pipeline into a stateful graph to test these specific features:
 
-* Persist and resume state across multiple user interactions (via MemorySaver).
-
-* Demonstrate multi‑step reasoning patterns and user interventions in a controlled way.
-
-I had no prior experience with LangGraph, so I followed the official [LangGraph documentation](https://langgraph.readthedocs.io/) and examples to understand how to define StateGraph, add nodes and edges, and compile the graph with checkpoints. In particular, I learned that:
+*   **Interrupts**: Pausing the graph to let the user review ingredients *before* generation, and selecting a recipe *before* finalization.
+*   **State Persistence**: Using `MemorySaver` to hold the application state while waiting for user input.
 
 * State objects must be fully serialisable. Initially I passed PIL images through the graph state, which produced TypeError: Type is not msgpack serialisable: Image. I resolved this by converting the image to bytes and nulling it after extraction.
 
