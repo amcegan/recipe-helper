@@ -1,4 +1,5 @@
 from google import genai
+from tenacity import retry, stop_after_attempt, wait_exponential
 from PIL import Image
 from typing import List, Optional
 from src.schemas import IngredientList
@@ -19,8 +20,14 @@ Rules:
 class VisionPipeline:
     def __init__(self, api_key: str):
         self.client = genai.Client(api_key=api_key)
-        self.model_id = "gemini-2.0-flash"
+        self.model_id = "gemini-2.0-flash"   # Multi-modal model
 
+    
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=1, min=2, max=10),
+        reraise=True
+    )
     def extract_ingredients(self, image: Image.Image, request_id: str) -> IngredientList:
         logger = get_request_logger(request_id)
         logger.debug(f"ENTERING: extract_ingredients with request_id={request_id}")
@@ -41,7 +48,7 @@ class VisionPipeline:
                 raise ValueError("Failed to extract ingredients from image")
 
             logger.info(f"Successfully extracted {len(response.parsed.ingredients)} ingredients")
-            logger.debug(f"EXITING: extract_ingredients with {len(response.parsed.ingredients)} items")
+            logger.debug(f"EXITING: extract_ingredients")
             return response.parsed
         except Exception as e:
             logger.error(f"Error during extraction: {str(e)}")
