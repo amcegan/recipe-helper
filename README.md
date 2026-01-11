@@ -20,10 +20,10 @@ The application is built with a modular, "safety-first" architecture designed fo
 | File | Audience | Purpose |
 | :--- | :--- | :--- |
 | **[README.md](README.md)** | Users / Devs | Primary project overview, setup, and execution guide. |
+| **[PROJECT_PROMPT.md](PROJECT_PROMPT.md)**| Devs | Comprehensive blueprint for recreating this project from scratch. |
 | **[.agent/Agents.md](.agent/Agents.md)** | AI Assistants | Agent Context, architectural constraints, safety standards, and coding conventions for AI. |
 | **[.agent/rules/python-standards.md](.agent/rules/python-standards.md)** | Devs / AI | Specific coding standards and best practices for Python. |
-| **[PROJECT_PROMPT.md](PROJECT_PROMPT.md)**| Devs | Comprehensive blueprint for recreating this project from scratch. |
-| **[workflows/](.agent/workflows/)** | Devs / AI | Automation scripts (e.g., unit test generation) for agentic workflows. |
+| **[.agent/workflows/generate-unit-tests.md](.agent/workflows/generate-unit-tests.md)** | Devs / AI |  Generate/Run unit tests for the project. |
 
 ## Setup Instructions
 
