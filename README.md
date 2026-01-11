@@ -32,7 +32,7 @@ Throughout the workflow the application uses a unique request\_id and consistent
 
 The project is organised as a small library with a thin Streamlit user interface. This separation makes it easy to test and reuse the business logic without depending on the UI framework.
 
-* **Modular services:**
+* **Modular services and components:**
 
   * **src/vision.py** encapsulates all image handling and calls to the Gemini vision API. It accepts a PIL Image, constructs a prompt, and returns a IngredientList Pydantic model after filtering by confidence.
 
