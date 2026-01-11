@@ -15,18 +15,9 @@ def setup_logger(name: str = "recipe_helper") -> logging.Logger:
         logger.setLevel(logging.DEBUG)
     return logger
 
-class RequestLoggerAdapter(logging.LoggerAdapter):
-    """Adapter to inject request_id into log records."""
-    def process(self, msg, kwargs):
-        # Ensure 'extra' exists in kwargs and contains 'request_id'
-        extra = kwargs.get("extra", {})
-        extra.update(self.extra)
-        kwargs["extra"] = extra
-        return msg, kwargs
-
-def get_request_logger(request_id: Optional[str] = None) -> RequestLoggerAdapter:
+def get_request_logger(request_id: Optional[str] = None) -> logging.LoggerAdapter:
     """Returns a logger adapter with a unique request ID."""
     if not request_id:
         request_id = str(uuid.uuid4())[:8]
     logger = setup_logger()
-    return RequestLoggerAdapter(logger, {"request_id": request_id})
+    return logging.LoggerAdapter(logger, {"request_id": request_id})
