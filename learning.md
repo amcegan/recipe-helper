@@ -60,7 +60,11 @@ Refactoring the Streamlit UI into a three‑stage flow required understanding ho
 
 * I have done alot of work wit RAG in the past and did not think it worth including.
 
-* If I had more time, I would explore prompt chaining.
+* It would be benefical to cache the weather responses.
+
+* If I had more time, I would demonstrate prompt chaining using either
+    A. Two‑stage suggestion generation: Use an initial prompt to brainstorm a larger set of recipe ideas (say, 10–15 titles) based on the ingredients and context. Feed those titles into a second prompt that ranks them or filters them against user preferences and dietary constraints, returning only the top 3–5 suggestions with rationales. This makes the selection more controllable and lets you inspect the ranking logic.
+    B. Recipe quality check: After generating a final recipe, run a follow‑up prompt that reviews the recipe for clarity, completeness and safety (for example, checking that all steps use available ingredients and that cooking times are consistent). If issues are detected, the chain could trigger a regeneration or adjust the instructions.
 
 ---
 
