@@ -1,6 +1,7 @@
 import logging
 import uuid
 from typing import Optional
+import os
 
 def setup_logger(name: str = "recipe_helper") -> logging.Logger:
     """Sets up a logger with a consistent format and unique request IDs."""
@@ -12,7 +13,11 @@ def setup_logger(name: str = "recipe_helper") -> logging.Logger:
         )
         handler.setFormatter(formatter)
         logger.addHandler(handler)
-        logger.setLevel(logging.DEBUG)
+        
+        # Read log level from environment, default to INFO if not set or invalid
+        level_name = os.getenv("LOG_LEVEL", "INFO").upper()
+        level = getattr(logging, level_name, logging.INFO)
+        logger.setLevel(level)
     return logger
 
 def get_request_logger(request_id: Optional[str] = None) -> logging.LoggerAdapter:
