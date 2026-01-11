@@ -46,6 +46,9 @@ class VisionPipeline:
                 logger.error("No parsed content in Gemini response")
                 raise ValueError("Failed to extract ingredients from image")
 
+            # Explicitly validate against Pydantic model else ValidationError
+            IngredientList.model_validate(response.parsed)
+
             logger.info(f"Successfully extracted {len(response.parsed.ingredients)} ingredients")
             logger.debug(f"EXITING: extract_ingredients")
             return response.parsed

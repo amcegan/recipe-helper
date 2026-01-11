@@ -48,6 +48,9 @@ class RecipePipeline:
             if not response.parsed:
                 raise ValueError("Empty parsed response from Gemini")
             
+            # Explicitly validate against Pydantic model else ValidationError
+            RecipeSuggestionList.model_validate(response.parsed)
+            
             logger.debug(f"EXITING: suggest_recipes with {len(response.parsed.suggestions)} suggestions")
             return response.parsed
         except Exception as e:
@@ -91,6 +94,9 @@ class RecipePipeline:
             logger.info(f"Final recipe generated: {response.parsed.title}")
             if not response.parsed:
                 raise ValueError("Empty parsed response from Gemini")
+            
+            # Explicitly validate against Pydantic model
+            FinalRecipe.model_validate(response.parsed)
             
             logger.debug(f"EXITING: generate_final_recipe for {response.parsed.title}")
             return response.parsed
