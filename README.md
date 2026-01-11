@@ -1,6 +1,8 @@
 # Recipe Helper
-This project was created using Google's AntiGravity AI agent. 
-The full project prompt can be found in [PROJECT_PROMPT.md](PROJECT_PROMPT.md).
+This project was created using Google's AntiGravity AI agent. An agents.md file can be found in the .agent directory.
+
+
+The full project prompt can be found in [project-prompt.md](project-prompt.md).
 
 Recipe Helper is an AI-powered culinary companion that transforms photos of your ingredients into delicious recipes. 
 Using Google's Gemini 2.0 Flash model, the application detects ingredients with high precision and suggests creative, safe, and personalized recipes.
@@ -20,8 +22,8 @@ The application is built with a modular, "safety-first" architecture designed fo
 | File | Audience | Purpose |
 | :--- | :--- | :--- |
 | **[README.md](README.md)** | Users / Devs | Primary project overview, setup, and execution guide. |
-| **[PROJECT_PROMPT.md](PROJECT_PROMPT.md)**| Devs | Comprehensive blueprint for recreating this project from scratch. |
-| **[.agent/Agents.md](.agent/Agents.md)** | AI Assistants | Agent Context, architectural constraints, safety standards, and coding conventions for AI. |
+| **[project-prompt.md](project-prompt.md)**| Devs | Comprehensive blueprint for recreating this project from scratch. |
+| **[.agent/agents.md](.agent/agents.md)** | AI Assistants | Agent Context, architectural constraints, safety standards, and coding conventions for AI. |
 | **[.agent/rules/python-standards.md](.agent/rules/python-standards.md)** | Devs / AI | Specific coding standards and best practices for Python. |
 | **[.agent/workflows/generate-unit-tests.md](.agent/workflows/generate-unit-tests.md)** | Devs / AI |  Generate/Run unit tests for the project. |
 
