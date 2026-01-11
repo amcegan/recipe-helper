@@ -26,3 +26,24 @@ def get_request_logger(request_id: Optional[str] = None) -> logging.LoggerAdapte
         request_id = str(uuid.uuid4())[:8]
     logger = setup_logger()
     return logging.LoggerAdapter(logger, {"request_id": request_id})
+
+def log_retry(retry_state):
+    """Callback for tenacity to log retry attempts."""
+    # Attempt to extract request_id from the function arguments if possible
+    # tenacity provides the function in retry_state.fn and arguments in retry_state.args/kwargs
+    # Our service methods have request_id as the last or named argument
+    request_id = "unknown"
+    if 'request_id' in retry_state.kwargs:
+        request_id = retry_state.kwargs['request_id']
+    elif retry_state.args:
+        # For our specific methods: extract_ingredients(self, image, request_id)
+        # or suggest_recipes(self, ingredients, preference, request_id)
+        # request_id is usually at the end
+        request_id = retry_state.args[-1]
+
+    logger = get_request_logger(request_id)
+    attempt_num = retry_state.attempt_number
+    exception = retry_state.outcome.exception()
+    next_step = f"retrying in {retry_state.next_action.sleep}s" if retry_state.next_action else "final attempt failed"
+    
+    logger.warning(f"Retry attempt {attempt_num} failed: {exception}. {next_step}")

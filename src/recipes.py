@@ -3,7 +3,7 @@ from google.genai import types
 from tenacity import retry, stop_after_attempt, wait_exponential
 from typing import List, Optional
 from src.schemas import Ingredient, RecipeSuggestionList, FinalRecipe
-from src.logger import get_request_logger
+from src.logger import get_request_logger, log_retry
 from src.prompts import RECIPE_SUGGESTION_PROMPT, FINAL_RECIPE_PROMPT
 
 
@@ -15,6 +15,7 @@ class RecipePipeline:
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
+        after=log_retry,
         reraise=True
     )
     def suggest_recipes(self, ingredients: List[Ingredient], preference: Optional[str], request_id: str) -> RecipeSuggestionList:
@@ -60,6 +61,7 @@ class RecipePipeline:
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
+        after=log_retry,
         reraise=True
     )
     def generate_final_recipe(self, suggestion_title: str, ingredients: List[Ingredient], preference: Optional[str], request_id: str) -> FinalRecipe:
