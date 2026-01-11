@@ -31,46 +31,43 @@ def render_ui():
     vision_pipeline = VisionPipeline(api_key)
     recipe_pipeline = RecipePipeline(api_key)
 
-    col1, col2 = st.columns([1, 1])
+    st.header("1. Upload Ingredients")
+    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+    user_preference = st.text_input("Any preferences? (e.g., 'quick vegetarian lunch')", "")
 
-    with col1:
-        st.header("1. Upload Ingredients")
-        uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
-        user_preference = st.text_input("Any preferences? (e.g., 'quick vegetarian lunch')", "")
+    if uploaded_file:
+        image = Image.open(uploaded_file)
+        st.image(image, caption="Uploaded Image", use_container_width=True)
 
-        if uploaded_file:
-            image = Image.open(uploaded_file)
-            st.image(image, caption="Uploaded Image", use_container_width=True)
+        if st.button("Detect Ingredients"):
+            with st.spinner("Analyzing image..."):
+                try:
+                    ingredients = vision_pipeline.extract_ingredients(image, request_id)
+                    st.session_state.ingredients = ingredients.ingredients
+                    st.success(f"Detected {len(ingredients.ingredients)} ingredients!")
+                except Exception as e:
+                    st.error(f"Error extracting ingredients: {e}")
 
-            if st.button("Detect Ingredients"):
-                with st.spinner("Analyzing image..."):
-                    try:
-                        ingredients = vision_pipeline.extract_ingredients(image, request_id)
-                        st.session_state.ingredients = ingredients.ingredients
-                        st.success(f"Detected {len(ingredients.ingredients)} ingredients!")
-                    except Exception as e:
-                        st.error(f"Error extracting ingredients: {e}")
+    if "ingredients" in st.session_state:
+        st.divider()
+        st.header("2. Detected Ingredients")
+        for ing in st.session_state.ingredients:
+            confidence_color = "green" if ing.confidence > 0.8 else "orange" if ing.confidence > 0.5 else "red"
+            st.markdown(f"- **{ing.name}** (Confidence: :{confidence_color}[{ing.confidence:.2f}])")
+            if ing.notes:
+                st.caption(f"Note: {ing.notes}")
 
-    with col2:
-        if "ingredients" in st.session_state:
-            st.header("2. Detected Ingredients")
-            for ing in st.session_state.ingredients:
-                confidence_color = "green" if ing.confidence > 0.8 else "orange" if ing.confidence > 0.5 else "red"
-                st.markdown(f"- **{ing.name}** (Confidence: :{confidence_color}[{ing.confidence:.2f}])")
-                if ing.notes:
-                    st.caption(f"Note: {ing.notes}")
-
-            if st.button("Generate Recipe Suggestions"):
-                with st.spinner("Thinking of recipes..."):
-                    try:
-                        suggestions = recipe_pipeline.suggest_recipes(
-                            st.session_state.ingredients, 
-                            user_preference, 
-                            request_id
-                        )
-                        st.session_state.suggestions = suggestions.suggestions
-                    except Exception as e:
-                        st.error(f"Error generating suggestions: {e}")
+        if st.button("Generate Recipe Suggestions"):
+            with st.spinner("Thinking of recipes..."):
+                try:
+                    suggestions = recipe_pipeline.suggest_recipes(
+                        st.session_state.ingredients, 
+                        user_preference, 
+                        request_id
+                    )
+                    st.session_state.suggestions = suggestions.suggestions
+                except Exception as e:
+                    st.error(f"Error generating suggestions: {e}")
 
     if "suggestions" in st.session_state:
         st.divider()
@@ -83,7 +80,8 @@ def render_ui():
             with st.spinner("Preparing detailed recipe..."):
                 try:
                     final_recipe = recipe_pipeline.generate_final_recipe(
-                        chosen_title, 
+                        chosen_title,
+                        st.session_state.ingredients,
                         user_preference, 
                         request_id
                     )
@@ -96,20 +94,17 @@ def render_ui():
         recipe = st.session_state.final_recipe
         st.header(f"📖 Final Recipe: {recipe.title}")
         
-        c1, c2 = st.columns([1, 2])
-        with c1:
-            st.subheader("Ingredients")
-            for item in recipe.ingredients:
-                st.write(f"- {item}")
-            st.info(f"**Cooking Time:** {recipe.cooking_time}")
+        st.subheader("Ingredients")
+        for item in recipe.ingredients:
+            st.write(f"- {item}")
+        st.info(f"**Cooking Time:** {recipe.cooking_time}")
 
-        with c2:
-            st.subheader("Instructions")
-            for i, step in enumerate(recipe.steps, 1):
-                st.write(f"{i}. {step}")
-            
-            if recipe.notes:
-                st.subheader("Chef's Notes")
-                st.write(recipe.notes)
+        st.subheader("Instructions")
+        for i, step in enumerate(recipe.steps, 1):
+            st.write(f"{i}. {step}")
+        
+        if recipe.notes:
+            st.subheader("Chef's Notes")
+            st.write(recipe.notes)
     
     logger.debug("EXITING: render_ui")
