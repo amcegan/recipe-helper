@@ -43,7 +43,7 @@ You are building a modular, production-ready Python application that recommends 
 
 ## Antigravity Configuration (AI Agents)
 
-*   **Instruction Discovery**: Store AI-specific project guidelines in `.agent/Agents.md`.
+*   **Instruction Discovery**: Store AI-specific project guidelines in `.agent/agents.md`.
 *   **Rules & Workflows**: 
     *   Maintain `.agent/rules/python-standards.md` for style and modularity enforcement.
     - Define a `generate-unit-tests` workflow in `.agent/workflows/`.
@@ -59,7 +59,7 @@ You are building a modular, production-ready Python application that recommends 
 2.  **Scaffold**: Generate skeletons following PEP 8 and type hints.
 3.  **Implement**: Build core pipelines with retries, logging, and validation.
 4.  **Test**: Comprehensive unit testing with `pytest`, mocking all external Gemini calls.
-5.  **Document**: Deliver final guides in `README.md` and `.agent/Agents.md`.
+5.  **Document**: Deliver final guides in `README.md` and `.agent/agents.md`.
 
 ## Development Guidelines
 
