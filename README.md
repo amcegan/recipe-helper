@@ -34,19 +34,19 @@ The project is organised as a small library with a thin Streamlit user interface
 
 * **Modular services:**
 
-* **src/vision.py** encapsulates all image handling and calls to the Gemini vision API. It accepts a PIL Image, constructs a prompt, and returns a IngredientList Pydantic model after filtering by confidence.
+  * **src/vision.py** encapsulates all image handling and calls to the Gemini vision API. It accepts a PIL Image, constructs a prompt, and returns a IngredientList Pydantic model after filtering by confidence.
 
-* **src/recipes.py** contains the recipe pipeline. It exposes two methods – **suggest\_recipes()** for high‑level suggestions and **generate\_final\_recipe()** for the full recipe – both of which enforce schema validation and implement exponential backoff retries.
+  * **src/recipes.py** contains the recipe pipeline. It exposes two methods – **suggest\_recipes()** for high‑level suggestions and **generate\_final\_recipe()** for the full recipe – both of which enforce schema validation and implement exponential backoff retries.
 
-* **src/prompts.py** centralises all prompts. Having the text in one place consistent prompt engineering.
+  * **src/prompts.py** centralises all prompts. Having the text in one place consistent prompt engineering.
 
-* **src/schemas.py** defines strong Pydantic models for ingredients, suggestions and final recipes. These models provide type safety, allow downstream code to reason about AI output, and support response\_schema integration with the Gemini API.
+  * **src/schemas.py** defines strong Pydantic models for ingredients, suggestions and final recipes. These models provide type safety, allow downstream code to reason about AI output, and support response\_schema integration with the Gemini API.
 
-* src/validators.py offers generic JSON cleaning/validation and a reusable retry wrapper for calls that may intermittently return invalid JSON. The retry logic is separate from tenacity to allow explicit recovery from schema‑related issues.
+  * src/validators.py offers generic JSON cleaning/validation and a reusable retry wrapper for calls that may intermittently return invalid JSON. The retry logic is separate from tenacity to allow explicit recovery from schema‑related issues.
 
-* src/logger.py sets up a structured logger and exposes get\_request\_logger() and log\_retry() so that every log line includes a request identifier. This aids debugging when multiple users are interacting concurrently.
+  * src/logger.py sets up a structured logger and exposes get\_request\_logger() and log\_retry() so that every log line includes a request identifier. This aids debugging when multiple users are interacting concurrently.
 
-* src/exceptions.py defines a clear exception hierarchy (AppVisionError, AppRecipeError, AppValidationError) which surfaces meaningful error messages to the caller without leaking implementation details.
+  * src/exceptions.py defines a clear exception hierarchy (AppVisionError, AppRecipeError, AppValidationError) which surfaces meaningful error messages to the caller without leaking implementation details.
 
 * **Streamlit front‑end:** The src/ui.py module implements the user interface. It uses Streamlit to render a three‑stage experience: uploading an image, reviewing detected ingredients, and generating recipes. The UI stores intermediate results (ingredients, suggestions, final\_recipe) in st.session\_state and passes the user’s textual preference from a st.text\_input() field to the recipe pipeline. Errors are handled gracefully via status messages, and each stage can be retried without refreshing the page.
 
