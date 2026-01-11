@@ -5,8 +5,6 @@ from src.schemas import IngredientList, Ingredient
 from src.exceptions import AppVisionError, AppValidationError
 from PIL import Image
 
-from pydantic import ValidationError
-
 @pytest.fixture
 def vision_pipeline():
     return VisionPipeline(api_key="fake_key")
@@ -16,7 +14,9 @@ def test_extract_ingredients_success(vision_pipeline):
     mock_response.parsed = IngredientList(ingredients=[
         Ingredient(name="carrot", confidence=0.9, notes="fresh")
     ])
-    
+
+    # mock the generate_content method of the client.models object
+    # return the mock_response when the method is called
     with patch.object(vision_pipeline.client.models, 'generate_content', return_value=mock_response):
         img = Image.new('RGB', (100, 100))
         result = vision_pipeline.extract_ingredients(img, "test_id")

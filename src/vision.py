@@ -2,7 +2,7 @@ from google import genai
 from google.genai import types
 from tenacity import retry, stop_after_attempt, wait_exponential
 from PIL import Image
-from typing import List, Optional
+from typing import List
 from src.schemas import IngredientList
 from src.logger import get_request_logger, log_retry
 from src.prompts import INGREDIENT_EXTRACTION_PROMPT
