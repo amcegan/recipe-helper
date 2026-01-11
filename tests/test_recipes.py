@@ -39,7 +39,8 @@ def test_generate_final_recipe_success(recipe_pipeline):
     )
     
     with patch.object(recipe_pipeline.client.models, 'generate_content', return_value=mock_response):
-        result = recipe_pipeline.generate_final_recipe("Salad", "healthy", "test_id")
+        ingredients = [Ingredient(name="lettuce", confidence=1.0)]
+        result = recipe_pipeline.generate_final_recipe("Salad", ingredients, "healthy", "test_id")
         
         assert isinstance(result, FinalRecipe)
         assert result.title == "Salad"
