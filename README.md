@@ -8,7 +8,7 @@ Recipe Helper is an AI‑powered culinary companion that turns photos of your p
 | :---- | :---- | :---- |
 | **README.md (this file)** | Users / Developers | Project overview, setup, running instructions, architectural design and trade‑offs, and limitations. |
 | **project‑prompt.md** | Developers | Blueprint for recreating this version of the project from scratch, including high‑level requirements, module responsibilities and development guidelines. |
-| **LEARNING.md** | Team / Reviewers | Reflection on the Part B learning challenge: resources consulted, challenges encountered, and insights gained from using LangGraph and integrating external data. |
+| **learning.md** | Team / Reviewers | Reflection on the Part B learning challenge: resources consulted, challenges encountered, and insights gained from using LangGraph and integrating external data. |
 | **.agent/agents.md** | AI Agents | Context and constraints for AI code generation, including safety, coding standards and agent workflows. |
 | **.agent/rules/python‑standards.md** | Developers / AI Agents | Detailed Python coding standards used throughout the project. |
 
