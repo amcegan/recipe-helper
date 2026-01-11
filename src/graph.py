@@ -9,6 +9,9 @@ from src.schemas import RecipeState, IngredientList, RecipeSuggestionList, Final
 from src.logger import get_request_logger
 from src.exceptions import AppVisionError, AppRecipeError, AppValidationError
 
+# Constants
+WEATHER_API_BASE_URL = "https://wttr.in"
+
 def get_weather_context():
     """Fetches weather context from wttr.in and current Dublin time."""
     city = os.getenv("LOCATION_CITY", "Dublin")
@@ -16,7 +19,7 @@ def get_weather_context():
     # Weather API (wttr.in)
     weather_desc = "mild weather"
     try:
-        url = f"https://wttr.in/{city}?format=j1"
+        url = f"{WEATHER_API_BASE_URL}/{city}?format=j1"
         response = requests.get(url, timeout=5)
         if response.status_code == 200:
             # Validate with Pydantic
