@@ -19,7 +19,7 @@ class RecipePipeline:
         after=log_retry,
         reraise=True
     )
-    def suggest_recipes(self, ingredients: List[Ingredient], preference: Optional[str], request_id: str) -> RecipeSuggestionList:
+    def suggest_recipes(self, ingredients: List[Ingredient], preference: Optional[str], context: Optional[str], request_id: str) -> RecipeSuggestionList:
         logger = get_request_logger(request_id)
         logger.debug(f"ENTERING: suggest_recipes with request_id={request_id}, preference={preference}")
         logger.info(f"Generating recipe suggestions with preference: {preference}")
@@ -27,7 +27,8 @@ class RecipePipeline:
         ingredient_names = ", ".join([ing.name for ing in ingredients])
         prompt = RECIPE_SUGGESTION_PROMPT.format(
             ingredients=ingredient_names,
-            preference=preference or "None"
+            preference=preference or "None",
+            context=context or "No specific context available."
         )
 
         try:
@@ -71,7 +72,7 @@ class RecipePipeline:
         after=log_retry,
         reraise=True
     )
-    def generate_final_recipe(self, suggestion_title: str, ingredients: List[Ingredient], preference: Optional[str], request_id: str) -> FinalRecipe:
+    def generate_final_recipe(self, suggestion_title: str, ingredients: List[Ingredient], preference: Optional[str], context: Optional[str], request_id: str) -> FinalRecipe:
         logger = get_request_logger(request_id)
         logger.debug(f"ENTERING: generate_final_recipe for {suggestion_title}, request_id={request_id}")
         logger.info(f"Generating final recipe for: {suggestion_title}")
@@ -80,7 +81,8 @@ class RecipePipeline:
         prompt = FINAL_RECIPE_PROMPT.format(
             suggestion=suggestion_title,
             ingredients=ingredient_names,
-            preference=preference or "None"
+            preference=preference or "None",
+            context=context or "No specific context available."
         )
 
         try:

@@ -24,7 +24,7 @@ def test_suggest_recipes_success(recipe_pipeline):
     
     with patch.object(recipe_pipeline.client.models, 'generate_content', return_value=mock_response):
         ingredients = [Ingredient(name="lettuce", confidence=1.0)]
-        result = recipe_pipeline.suggest_recipes(ingredients, "healthy", "test_id")
+        result = recipe_pipeline.suggest_recipes(ingredients, "healthy", "fake_context", "test_id")
         
         assert isinstance(result, RecipeSuggestionList)
         assert len(result.suggestions) == 1
@@ -41,7 +41,7 @@ def test_generate_final_recipe_success(recipe_pipeline):
     
     with patch.object(recipe_pipeline.client.models, 'generate_content', return_value=mock_response):
         ingredients = [Ingredient(name="lettuce", confidence=1.0)]
-        result = recipe_pipeline.generate_final_recipe("Salad", ingredients, "healthy", "test_id")
+        result = recipe_pipeline.generate_final_recipe("Salad", ingredients, "healthy", "fake_context", "test_id")
         
         assert isinstance(result, FinalRecipe)
         assert result.title == "Salad"
@@ -56,7 +56,7 @@ def test_suggest_recipes_empty_response(recipe_pipeline):
     with patch.object(recipe_pipeline.client.models, 'generate_content', return_value=mock_response):
         ingredients = [Ingredient(name="lettuce", confidence=1.0)]
         with pytest.raises(AppRecipeError, match="Empty parsed response"):
-            recipe_pipeline.suggest_recipes(ingredients, "healthy", "test_id")
+            recipe_pipeline.suggest_recipes(ingredients, "healthy", "fake_context", "test_id")
 
 def test_generate_final_recipe_validation_error(recipe_pipeline):
     mock_response = MagicMock()
@@ -67,4 +67,4 @@ def test_generate_final_recipe_validation_error(recipe_pipeline):
     with patch.object(recipe_pipeline.client.models, 'generate_content', return_value=mock_response):
         ingredients = [Ingredient(name="lettuce", confidence=1.0)]
         with pytest.raises(AppValidationError, match="Invalid final recipe format"):
-            recipe_pipeline.generate_final_recipe("Salad", ingredients, "healthy", "test_id")
+            recipe_pipeline.generate_final_recipe("Salad", ingredients, "healthy", "fake_context", "test_id")

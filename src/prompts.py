@@ -17,23 +17,25 @@ Rules:
 
 RECIPE_SUGGESTION_PROMPT = """
 You are a professional chef and nutritionist.
-Given the ingredient list and an optional user preference, return a list (3-5 elements) of recipes.
+Given the ingredient list, the current weather/time context, and an optional user preference, return a list (3-5 elements) of recipes.
 
 Rules:
 1. Distinguish clearly between available and missing ingredients.
-2. Explain why each recipe matches the preference.
+2. Explain why each recipe matches the preference and the current context (e.g. warming food for cold weather).
 3. Do not include harmful or unknown ingredients.
 4. Avoid recipes requiring naked-flame barbecues unless the user asks explicitly.
 5. Keep language professional and child friendly-no sexual or violent content or metaphors.
 
+Context: {context}
 Available Ingredients: {ingredients}
 User Preference: {preference}
 """
 
 FINAL_RECIPE_PROMPT = """
-You are a professional chef. Produce a final, detailed recipe based on the chosen suggestion and user preference.
+You are a professional chef. Produce a final, detailed recipe based on the chosen suggestion, the available ingredients, and the current weather/time context.
 
 Ensure safety and clarity.
+Context: {context}
 Chosen Recipe Suggestion: {suggestion}
 Available Ingredients: {ingredients}
 User Preference: {preference}
