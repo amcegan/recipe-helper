@@ -43,22 +43,25 @@ You are building a modular, production-ready Python application that recommends 
 
 ## Antigravity Configuration (AI Agents)
 
-*   **Instruction Discovery**: Store AI-specific project guidelines in `.agent/agents.md`.
-*   **Rules & Workflows**: 
-    *   Maintain `.agent/rules/python-standards.md` for style and modularity enforcement.
+- **Instruction Discovery**: Store AI-specific project guidelines in `.agent/agents.md`.
+- **Rules & Workflows**:
+    - Maintain `.agent/rules/python-standards.md` for style and modularity enforcement.
     - Define a `generate-unit-tests` workflow in `.agent/workflows/`.
-*   **Documentation Map**: Maintain a table in `README.md` mapping all `.md` files to their audience and purpose.
+- **Documentation Map**: Maintain a table in `README.md` mapping all `.md` files to their audience and purpose.
+- **Naming Convention**: Use **kebab-case** for all project documentation and configuration files (e.g., `project-prompt.md`, `python-standards.md`).
 
 ## Security & Privacy
-*   **Secret Management**: Use `.env.example` as a template; never commit hardcoded keys. Provide guidance for Production Secret Management (GitHub/AWS/Google).
-*   **Confinement**: Restrict file I/O to the project workspace.
-*   **API Security**: Set `max_output_tokens`, `temperature`, and `safety_settings` for all model interactions.
+
+- **Secret Management**: Use `.env.example` as a template; never commit hardcoded keys. Provide explicit guidance for Production Secret Management (GitHub Actions, AWS, or Google).
+- **Confinement**: Restrict file I/O strictly to the project workspace.
+- **API Security**: Set `max_output_tokens`, `temperature`, and `safety_settings` for all model interactions to ensure cost control and safety.
 
 ## Development Workflow
-1.  **Plan**: Present module outlines and schemas for approval.
-2.  **Scaffold**: Generate skeletons following PEP 8 and type hints.
-3.  **Implement**: Build core pipelines with retries, logging, and validation.
-4.  **Test**: Comprehensive unit testing with `pytest`, mocking all external Gemini calls.
+
+1.  **Plan**: Present module outlines and schemas for approval before coding.
+2.  **Scaffold**: Generate code skeletons following PEP 8 and explicit type hints.
+3.  **Implement**: Build core pipelines with retries, request-ID logging, and strict validation.
+4.  **Test**: Comprehensive unit testing with `pytest`, mocking all external Gemini API calls.
 5.  **Document**: Deliver final guides in `README.md` and `.agent/agents.md`.
 
 ## Development Guidelines
@@ -69,7 +72,4 @@ You are building a modular, production-ready Python application that recommends 
 - **Resource Management**: Always use context managers (`with` statements) to ensure resources like files and images are properly closed.
 - **Model Configuration**: Explicitly set token limits, temperature, and safety settings for every model call.
 - **Integrity**: Verify that all response elements are valid against Pydantic models immediately upon receipt.
-- **Interface Design**: Ensure others can reuse portions of the codebase with confidence in the correctness and reliability of the results.
-- **Interface Design**: Use a domain-specific exception hierarchy.
-
-
+- **Interface Design**: Use a domain-specific exception hierarchy (e.g., `src/exceptions.py`) so that others can reuse portions of the codebase with confidence in its correctness and reliability.
