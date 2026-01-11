@@ -33,7 +33,6 @@ def render_ui():
 
     st.header("1. Upload Ingredients")
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
-    user_preference = st.text_input("Any preferences? (e.g., 'quick vegetarian lunch')", "")
 
     if uploaded_file:
         image = Image.open(uploaded_file)
@@ -56,6 +55,8 @@ def render_ui():
             st.markdown(f"- **{ing.name}** (Confidence: :{confidence_color}[{ing.confidence:.2f}])")
             if ing.notes:
                 st.caption(f"Note: {ing.notes}")
+
+        user_preference = st.text_input("Any preferences? (e.g., 'quick vegetarian lunch')", "")
 
         if st.button("Generate Recipe Suggestions"):
             with st.spinner("Thinking of recipes..."):
