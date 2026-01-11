@@ -1,3 +1,4 @@
+import os
 from google import genai
 from google.genai import types
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -13,6 +14,10 @@ class VisionPipeline:
     def __init__(self, api_key: str):
         self.client = genai.Client(api_key=api_key)
         self.model_id = "gemini-2.0-flash"   # Multi-modal model
+        try:
+            self.confidence_threshold = float(os.getenv("INGREDIENT_CONFIDENCE_THRESHOLD", "0.0"))
+        except ValueError:
+            self.confidence_threshold = 0.0
 
     
     @retry(
@@ -55,7 +60,18 @@ class VisionPipeline:
                 logger.error(f"Validation failed: {str(e)}")
                 raise AppValidationError(f"Invalid ingredient data format: {str(e)}") from e
 
-            logger.info(f"Successfully extracted {len(response.parsed.ingredients)} ingredients")
+            # Filter by confidence
+            original_count = len(response.parsed.ingredients)
+            response.parsed.ingredients = [
+                ing for ing in response.parsed.ingredients 
+                if ing.confidence >= self.confidence_threshold
+            ]
+            filtered_count = len(response.parsed.ingredients)
+            
+            if filtered_count < original_count:
+                logger.info(f"Filtered out {original_count - filtered_count} ingredients below {self.confidence_threshold} confidence")
+
+            logger.info(f"Successfully extracted {filtered_count} ingredients")
             logger.debug(f"EXITING: extract_ingredients")
             return response.parsed
         except Exception as e:

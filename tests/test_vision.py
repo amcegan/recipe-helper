@@ -62,3 +62,19 @@ def test_extract_ingredients_retry_success(vision_pipeline):
             
             assert mock_gen.call_count == 2
             assert result.ingredients[0].name == "carrot"
+
+def test_extract_ingredients_confidence_filtering(vision_pipeline):
+    mock_response = MagicMock()
+    mock_response.parsed = IngredientList(ingredients=[
+        Ingredient(name="carrot", confidence=0.9),
+        Ingredient(name="dust", confidence=0.2)
+    ])
+    
+    with patch.object(vision_pipeline.client.models, 'generate_content', return_value=mock_response):
+        # Set threshold to 0.5
+        vision_pipeline.confidence_threshold = 0.5
+        img = Image.new('RGB', (100, 100))
+        result = vision_pipeline.extract_ingredients(img, "test_id")
+        
+        assert len(result.ingredients) == 1
+        assert result.ingredients[0].name == "carrot"

@@ -24,6 +24,7 @@ Copy the .env.example file to .env and set your API key:
 Edit `.env` and set:
 - `GEMINI_API_KEY`: Your key from [Google AI Studio](https://aistudio.google.com/). A paid account is recommended.
 - `LOG_LEVEL`: (Optional) Set to `DEBUG` for detailed trace logs or `INFO` for standard output.
+- `INGREDIENT_CONFIDENCE_THRESHOLD`: (Optional) Minimum certainty score (0.0 to 1.0) to include an ingredient. Default is 0.5.
 
 ### 3. Dependency Installation
 We recommend using a virtual environment:
