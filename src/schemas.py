@@ -32,3 +32,28 @@ class FinalRecipe(BaseModel):
     steps: List[str]
     cooking_time: str
     notes: Optional[str] = None
+
+class WeatherDesc(BaseModel):
+    value: str
+
+class CurrentCondition(BaseModel):
+    temp_C: str
+    weatherDesc: List[WeatherDesc]
+
+class WeatherResponse(BaseModel):
+    current_condition: List[CurrentCondition]
+
+from typing import TypedDict, Annotated
+import operator
+
+class RecipeState(TypedDict):
+    """State for the LangGraph recipe generation flow."""
+    image: Optional[bytes]
+    ingredients: Optional[List[Ingredient]]
+    context: Optional[str] # Weather/Time
+    suggestions: Optional[List[RecipeSuggestion]]
+    selected_recipe: Optional[str] # Title
+    user_preference: Optional[str]
+    final_recipe: Optional[FinalRecipe]
+    request_id: str
+    error: Optional[str]
