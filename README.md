@@ -174,4 +174,24 @@ This project fulfills the "Learning & Exploration Challenge" of the technical in
 
 See `LEARNING.md` for a deeper dive into these technical choices and the lessons learned.
 
+## Production Deployment Considerations
+
+To transition this proof-of-concept into a production-grade service, the following architectural changes would be required:
+
+1.  **State Persistence**: Replace the in-memory `MemorySaver` with a durable backend like **PostgreSQL** (using `AsyncPostgresSaver`) or Redis. This ensures user sessions survive service restarts and allows for horizontal scaling.
+2.  **Scalable Serving**: Decouple the Streamlit UI from the core logic. Deploy the LangGraph application as a **FastAPI** microservice (using LangServe) to handle high concurrency and provide a clean REST API for multiple front-ends (web, mobile).
+3.  **Time & Localization**: Remove reliance on server system time. Use the user's browser/client to send their local timezone or geolocation for accurate time and weather context.
+4.  **Weather Service SLA**: Replace the community-hosted `wttr.in` with a commercial provider (e.g., OpenWeatherMap or Google Maps Platform) to guarantee uptime and latency SLAs.
+5.  **Observability**: Integrate structured logging (e.g., OpenTelemetry) to trace requests across the graph nodes and monitor LLM latency/costs in real-time.
+
+## Edge Case Handling & Robustness
+
+The assessment requires demonstrating how the system handles failures and edge cases. This implementation addresses several robustness scenarios:
+
+1.  **External API Failure (Weather)**: The `get_weather_context` function uses a `try-except` block. If `wttr.in` is unreachable or returns invalid data, the system gracefully degrades to a "mild weather" default rather than crashing the entire recipe flow.
+2.  **Transient Network Errors**: All Gemini API calls in `src/vision.py` and `src/recipes.py` are wrapped with the `@retry` decorator from the `tenacity` library. This handles temporary hiccups (like rate limits or timeouts) by automatically retrying with exponential backoff.
+3.  **Low-Confidence Detections**: The vision pipeline implements a filter (`INGREDIENT_CONFIDENCE_THRESHOLD`) to silently discard hallucinations or uncertain ingredients, ensuring only high-quality data reaches the recipe generator.
+4.  **LLM Output Validation**: We do not blindly trust the AI. Every response is parsed and immediately validated against Pydantic models. If the schema doesn't match, an `AppValidationError` is raised immediately, preventing "silent failures" downstream.
+5.  **Graph State Serialization**: To prevent the "Un-serializable Data" edge case common in distributed graphs, the `extract_ingredients_node` enforces that images are strictly converted to `bytes` and then cleared (`None`) after processing to keep checkpoints lightweight.
+
 ---
