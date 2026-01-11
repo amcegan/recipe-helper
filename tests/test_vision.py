@@ -2,6 +2,7 @@ import pytest
 from unittest.mock import MagicMock, patch
 from src.vision import VisionPipeline
 from src.schemas import IngredientList, Ingredient
+from src.exceptions import AppVisionError, AppValidationError
 from PIL import Image
 
 from pydantic import ValidationError
@@ -28,7 +29,7 @@ def test_extract_ingredients_success(vision_pipeline):
 def test_extract_ingredients_error(vision_pipeline):
     with patch.object(vision_pipeline.client.models, 'generate_content', side_effect=Exception("API Error")):
         img = Image.new('RGB', (100, 100))
-        with pytest.raises(Exception, match="API Error"):
+        with pytest.raises(AppVisionError):
             vision_pipeline.extract_ingredients(img, "test_id")
 
 def test_extract_ingredients_validation_error(vision_pipeline):
@@ -41,7 +42,7 @@ def test_extract_ingredients_validation_error(vision_pipeline):
         mock_response.parsed = MagicMock(spec=[]) # No 'ingredients' attribute
         
         img = Image.new('RGB', (100, 100))
-        with pytest.raises(ValidationError):
+        with pytest.raises(AppValidationError):
              vision_pipeline.extract_ingredients(img, "test_id")
 
 def test_extract_ingredients_retry_success(vision_pipeline):

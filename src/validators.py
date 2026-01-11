@@ -2,6 +2,7 @@ import json
 from typing import Type, TypeVar, Any
 from pydantic import BaseModel, ValidationError
 from src.logger import get_request_logger
+from src.exceptions import AppValidationError
 
 T = TypeVar("T", bound=BaseModel)
 
@@ -21,10 +22,10 @@ def validate_llm_json(content: str, schema: Type[T], request_id: str) -> T:
         return result
     except json.JSONDecodeError as e:
         logger.error(f"JSON decode error: {str(e)}")
-        raise ValueError(f"Invalid JSON format: {str(e)}")
+        raise AppValidationError(f"Invalid JSON format: {str(e)}") from e
     except ValidationError as e:
         logger.error(f"Schema validation error: {str(e)}")
-        raise ValueError(f"Schema validation failed: {str(e)}")
+        raise AppValidationError(f"Schema validation failed: {str(e)}") from e
 
 def retry_llm_call(func: Any, max_retries: int = 2, *args: Any, **kwargs: Any) -> Any:
     """

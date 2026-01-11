@@ -5,6 +5,7 @@ from typing import List, Optional
 from src.schemas import Ingredient, RecipeSuggestionList, FinalRecipe
 from src.logger import get_request_logger, log_retry
 from src.prompts import RECIPE_SUGGESTION_PROMPT, FINAL_RECIPE_PROMPT
+from src.exceptions import AppRecipeError, AppValidationError
 
 
 class RecipePipeline:
@@ -47,16 +48,22 @@ class RecipePipeline:
                 )
             )
             if not response.parsed:
-                raise ValueError("Empty parsed response from Gemini")
+                raise AppRecipeError("Empty parsed response from Gemini during recipe suggestion")
             
             # Explicitly validate against Pydantic model else ValidationError
-            RecipeSuggestionList.model_validate(response.parsed)
+            try:
+                RecipeSuggestionList.model_validate(response.parsed)
+            except Exception as e:
+                logger.error(f"Validation failed: {str(e)}")
+                raise AppValidationError(f"Invalid recipe suggestion format: {str(e)}") from e
             
             logger.debug(f"EXITING: suggest_recipes with {len(response.parsed.suggestions)} suggestions")
             return response.parsed
         except Exception as e:
             logger.error(f"Error suggesting recipes: {str(e)}")
-            raise
+            if isinstance(e, (AppRecipeError, AppValidationError)):
+                raise e
+            raise AppRecipeError(f"Unexpected error in Recipe Pipeline (suggestions): {str(e)}") from e
 
     @retry(
         stop=stop_after_attempt(3),
@@ -95,13 +102,19 @@ class RecipePipeline:
             )
             logger.info(f"Final recipe generated: {response.parsed.title}")
             if not response.parsed:
-                raise ValueError("Empty parsed response from Gemini")
+                raise AppRecipeError("Empty parsed response from Gemini during final recipe generation")
             
             # Explicitly validate against Pydantic model
-            FinalRecipe.model_validate(response.parsed)
+            try:
+                FinalRecipe.model_validate(response.parsed)
+            except Exception as e:
+                logger.error(f"Validation failed: {str(e)}")
+                raise AppValidationError(f"Invalid final recipe format: {str(e)}") from e
             
             logger.debug(f"EXITING: generate_final_recipe for {response.parsed.title}")
             return response.parsed
         except Exception as e:
             logger.error(f"Error generating final recipe: {str(e)}")
-            raise
+            if isinstance(e, (AppRecipeError, AppValidationError)):
+                raise e
+            raise AppRecipeError(f"Unexpected error in Recipe Pipeline (final): {str(e)}") from e
