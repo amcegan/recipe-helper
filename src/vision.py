@@ -6,6 +6,7 @@ from typing import List, Optional
 from src.schemas import IngredientList
 from src.logger import get_request_logger, log_retry
 from src.prompts import INGREDIENT_EXTRACTION_PROMPT
+from src.exceptions import AppVisionError, AppValidationError
 
 
 class VisionPipeline:
@@ -45,14 +46,21 @@ class VisionPipeline:
             
             if not response.parsed:
                 logger.error("No parsed content in Gemini response")
-                raise ValueError("Failed to extract ingredients from image")
+                raise AppVisionError("Failed to extract ingredients from image: Empty response")
 
             # Explicitly validate against Pydantic model else ValidationError
-            IngredientList.model_validate(response.parsed)
+            try:
+                IngredientList.model_validate(response.parsed)
+            except Exception as e:
+                logger.error(f"Validation failed: {str(e)}")
+                raise AppValidationError(f"Invalid ingredient data format: {str(e)}") from e
 
             logger.info(f"Successfully extracted {len(response.parsed.ingredients)} ingredients")
             logger.debug(f"EXITING: extract_ingredients")
             return response.parsed
         except Exception as e:
             logger.error(f"Error during extraction: {str(e)}")
-            raise
+            if isinstance(e, (AppVisionError, AppValidationError)):
+                raise e
+            # Re-wrap unexpected exceptions for consistent library interface
+            raise AppVisionError(f"Unexpected error in Vision Pipeline: {str(e)}") from e
