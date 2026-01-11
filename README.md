@@ -16,7 +16,18 @@ Recipe Helper is an AI‑powered culinary companion that turns photos of your p
 
 This iteration extends the original recipe helper to explore a new GenAI framework and tool integration. The key changes are:
 
-* **Agent‑style orchestration with LangGraph:** The core workflow has been refactored into a **five‑node state machine** implemented in src/graph.py. The nodes execute in sequence and pause to allow user input: 1\) **Extract ingredients** decodes image bytes, calls the vision model and clears the image from state to reduce checkpoint size[\[1\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/graph.py#:~:text=def%20extract_ingredients_node,Image%20type%3A%20%7Btype%28state.get%28%27image). 2\) **Check weather** retrieves a city‑based forecast from *wttr.in*, validates it via a Pydantic model and formats a concise context string including the current Dublin time[\[2\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/graph.py#:~:text=def%20get_weather_context%28%29%3A%20,Dublin). 3\) **Suggest recipes** invokes RecipePipeline.suggest\_recipes() with the detected ingredients, the user’s preference and the weather/time context[\[3\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/graph.py#:~:text=def%20check_weather_node,context). 4\) **Human review** pauses execution so the user can choose one of the suggested recipes. 5\) **Generate final recipe** calls generate\_final\_recipe() with the selected title and context[\[4\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/graph.py#:~:text=def%20create_recipe_graph).
+* **Agent‑style orchestration with LangGraph:** The core workflow has been refactored into a **five‑node state machine** implemented in src/graph.py. The nodes execute in sequence and pause to allow user input:  
+
+  1\) **Extract ingredients** decodes image bytes, calls the vision model and clears the image from state to reduce checkpoint size[\[1\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/graph.py#:~:text=def%20extract_ingredients_node,Image%20type%3A%20%7Btype%28state.get%28%27image).  
+
+  2\) **Check weather** retrieves a city‑based forecast from *wttr.in*, validates it via a Pydantic model and formats a concise context string including the current Dublin time[\[2\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/graph.py#:~:text=def%20get_weather_context%28%29%3A%20,Dublin). 
+
+  3\) **Suggest recipes** invokes RecipePipeline.suggest\_recipes() with the detected ingredients, the user’s preference and the weather/time context[\[3\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/graph.py#:~:text=def%20check_weather_node,context).   
+
+  4\) **Human review** pauses execution so the user can choose one of the suggested recipes. 
+
+  5\) **Generate final recipe** calls generate\_final\_recipe() with the selected title and context[\[4\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/graph.py#:~:text=def%20create_recipe_graph).
+  
 
 * **Situational awareness:** Prompts are now enriched with situational context. The get\_weather\_context() function fetches the current temperature and weather description for a configurable city (default “Dublin”) and combines it with the local time[\[2\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/graph.py#:~:text=def%20get_weather_context%28%29%3A%20,Dublin). This string is passed through the graph and into the recipe prompts so that the model can tailor its suggestions to cold rainy evenings or sunny afternoons.
 
@@ -33,6 +44,24 @@ This iteration extends the original recipe helper to explore a new GenAI framewo
 * GEMINI\_API\_KEY, LOG\_LEVEL and INGREDIENT\_CONFIDENCE\_THRESHOLD from the original version are still used.
 
 * **Additional dependencies:** The refactor introduces langgraph, requests and pytz (for time zone handling). See requirements.txt for exact versions.
+
+## Workflow Orchestration
+
+The application follows a three-stage orchestrated flow with two state-managed interrupts:
+
+```mermaid
+graph TD
+    START((Start)) --> EXTRACT[Extract Ingredients]
+    EXTRACT --> WEATHER[Check Weather & Time]
+    WEATHER --> INT1{{"<b>Interrupt</b><br/>User reviews ingredients<br/>& enters preference"}}
+    INT1 --> SUGGEST[Suggest Recipes]
+    SUGGEST --> INT2{{"<b>Interrupt</b><br/>User selects recipe"}}
+    INT2 --> FINAL[Generate Final Recipe]
+    FINAL --> END((End))
+
+    style INT1 fill:#f9f,stroke:#333,stroke-width:2px
+    style INT2 fill:#f9f,stroke:#333,stroke-width:2px
+```
 
 ## Architectural Design & Decisions
 
