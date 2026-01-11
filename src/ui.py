@@ -35,17 +35,17 @@ def render_ui():
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
 
     if uploaded_file:
-        image = Image.open(uploaded_file)
-        st.image(image, caption="Uploaded Image", width='content')
+        with Image.open(uploaded_file) as image:
+            st.image(image, caption="Uploaded Image", width='content')
 
-        if st.button("Detect Ingredients"):
-            with st.spinner("Analyzing image..."):
-                try:
-                    ingredients = vision_pipeline.extract_ingredients(image, request_id)
-                    st.session_state.ingredients = ingredients.ingredients
-                    st.success(f"Detected {len(ingredients.ingredients)} ingredients!")
-                except Exception as e:
-                    st.error(f"Error extracting ingredients: {e}")
+            if st.button("Detect Ingredients"):
+                with st.spinner("Analyzing image..."):
+                    try:
+                        ingredients = vision_pipeline.extract_ingredients(image, request_id)
+                        st.session_state.ingredients = ingredients.ingredients
+                        st.success(f"Detected {len(ingredients.ingredients)} ingredients!")
+                    except Exception as e:
+                        st.error(f"Error extracting ingredients: {e}")
 
     if "ingredients" in st.session_state:
         st.divider()
