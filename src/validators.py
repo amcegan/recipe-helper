@@ -21,11 +21,9 @@ def validate_llm_json(content: str, schema: Type[T], request_id: str) -> T:
         return result
     except json.JSONDecodeError as e:
         logger.error(f"JSON decode error: {str(e)}")
-        logger.debug("EXITING: validate_llm_json - error")
         raise ValueError(f"Invalid JSON format: {str(e)}")
     except ValidationError as e:
         logger.error(f"Schema validation error: {str(e)}")
-        logger.debug("EXITING: validate_llm_json - error")
         raise ValueError(f"Schema validation failed: {str(e)}")
 
 def retry_llm_call(func: Any, max_retries: int = 2, *args: Any, **kwargs: Any) -> Any:

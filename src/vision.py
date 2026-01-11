@@ -45,5 +45,4 @@ class VisionPipeline:
             return response.parsed
         except Exception as e:
             logger.error(f"Error during extraction: {str(e)}")
-            logger.debug("EXITING: extract_ingredients with error")
             raise

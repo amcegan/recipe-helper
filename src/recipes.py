@@ -59,7 +59,6 @@ class RecipePipeline:
             return response.parsed
         except Exception as e:
             logger.error(f"Error suggesting recipes: {str(e)}")
-            logger.debug("EXITING: suggest_recipes with error")
             raise
 
     def generate_final_recipe(self, suggestion_title: str, ingredients: List[Ingredient], preference: Optional[str], request_id: str) -> FinalRecipe:
@@ -91,5 +90,4 @@ class RecipePipeline:
             return response.parsed
         except Exception as e:
             logger.error(f"Error generating final recipe: {str(e)}")
-            logger.debug("EXITING: generate_final_recipe with error")
             raise
