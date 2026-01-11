@@ -1,47 +1,58 @@
-# agents.md - AI Agent Conventions
+# Agents.md - AI Agent Conventions
 
-This file provides specific instructions and conventions for AI assistants working on the **Recipe Helper** project. Follow these guidelines to ensure consistency and reliability.
+This file provides specific instructions and conventions for AI assistants (like Google AntiGravity) working on the **Recipe Helper** project. Follow these guidelines to ensure consistency and reliability.
 
 ## Build and Execution
 - **Environment**: Use Python 3.9+ and a virtual environment.
 - **Install Dependencies**: `pip install -r requirements.txt`
-- **Configuration**: Copy `.env.example` to `.env` and providing `GEMINI_API_KEY` and `LOCATION_CITY`.
+- **Configuration**: Copy `.env.example` to `.env` and provide a `GEMINI_API_KEY`.
 - **Run Streamlit app**: `streamlit run main.py`
 
 ## Testing
 - **Run all tests**: `pytest tests/`
-- **Graph Compilation**: Verify graph compilation via CLI (`from src.graph import create_recipe_graph`).
+- **Run specific module**: `pytest tests/test_vision.py`
+- **Environment check**: Always run tests using the project's virtual environment python (`./venv/bin/python3 -m pytest tests/`).
 
 ## Technical Stack
 - **AI**: Gemini 2.0 Flash (`gemini-2.0-flash`)
-- **Orchestration**: LangGraph (StateGraph with state persistence)
 - **UI**: Streamlit
 - **Validation**: Pydantic v2
-- **External Tools**: `wttr.in` for weather context, `pytz` for timezone handling
+- **Reliability**: Tenacity (retries with exponential backoff)
+- **Logging**: Python `logging` with custom `RequestLoggerAdapter` for session tracing
 
 ## Core Architecture Decisions
-- **Graph-Based Workflow**: The application logic is orchestrated by a LangGraph `StateGraph` in `src/graph.py`. Use `interrupt_before` to implement human-in-the-loop steps.
-- **State Serialization**: The graph state (`RecipeState`) must be serializable.
-    - **Binary Images**: Convert images to `bytes` before storing in the state.
-    - **Cleaning state**: Set large binary objects (like images) to `None` immediately after they are processed by a node to optimize checkpoint size.
-- **Situational Context**: Enrich prompts with a `context` string containing local weather and time.
-- **Explicit Validation**: Use Pydantic models (e.g., `WeatherResponse`, `IngredientList`) for all external API and LLM responses.
+- **Safety First**: All LLM calls must have `safety_settings` configured (blocking dangerous content).
+- **Structured Output**: Use Gemini's native structured output (JSON mode) via `response_mime_type='application/json'` and Pydantic models in `response_schema`.
+- **Explicit Validation**: Always call `Model.model_validate(response.parsed)` to catch hallucinated schemas before they propagate.
+- **Library Design**: Components in `src/` should be designed for reusability. Use custom exceptions from `src/exceptions.py`.
+- **Externalized Prompts**: Never hardcode prompts in the pipeline logic. Use `src/prompts.py`.
 
 ## Coding Standards
-- **Graph Nodes**:
-    - Log "ENTERING Node: [NodeName]" at `DEBUG` level.
-    - Return a dictionary of updates to the state, not the entire state.
-- **Logging**: Use the `get_request_logger(request_id)` helper for session tracing.
-- **Resource Management**: Always use context managers (`with`) for files, images, and network requests.
+- **Naming Conventions**:
+    - Variables/Functions: `snake_case`
+    - Classes: `PascalCase`
+    - Constants: `UPPER_SNAKE_CASE`
+- **Logging**: 
+    - Use the `get_request_logger(request_id)` helper.
+    - All business logic methods must include `request_id` as a required parameter.
+    - Log "ENTERING" and "EXITING" for major logic flows at `DEBUG` level.
+- **Exception Handling**:
+    - Use `AppVisionError`, `AppRecipeError`, and `AppValidationError` for domain-specific failures.
+    - Wrap unexpected errors to maintain a clean library interface.
+- **Resource Management**: Always use context managers (`with`) for files and images (e.g., `PIL.Image.open`).
+
+## Testing Philosophy
+- Every new feature or utility in `src/` must have a corresponding test in `tests/`.
+- Use `pytest` with `unittest.mock` for external dependencies (API calls).
+- Keep `tests/test_validators.py` minimal (essential logic only).
+- Verify all 3 core pipelines: Vision, Recipes, and Validators.
 
 ## Environment Variables
-- `GEMINI_API_KEY`: Required for Gemini model access.
-- `LOCATION_CITY`: City for weather context (default `Dublin`).
+- `GEMINI_API_KEY`: Required for model access.
 - `LOG_LEVEL`: Controls verbosity (default `INFO`).
 - `INGREDIENT_CONFIDENCE_THRESHOLD`: Minimum threshold for ingredient detection (default `0.5`).
 
 ## Reference Documentation
-- [LangGraph Documentation](https://langchain-ai.github.io/langgraph/)
 - [Google Gemini API](https://ai.google.dev/docs)
+- [Streamlit Framework](https://docs.streamlit.io/)
 - [Pydantic v2](https://docs.pydantic.dev/)
-- [wttr.in](https://wttr.in/:help)

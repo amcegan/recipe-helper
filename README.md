@@ -43,11 +43,11 @@ This iteration extends the original recipe helper to explore a new GenAI framewo
 
 * GEMINI\_API\_KEY, LOG\_LEVEL and INGREDIENT\_CONFIDENCE\_THRESHOLD from the original version are still used.
 
-* **Additional dependencies:** The refactor introduces langgraph, requests and pytz (for time zone handling). See requirements.txt for exact versions.
+* **Additional dependencies:** The refactor introduces langgraph and requests. See requirements.txt for exact versions.
 
 ## Workflow Orchestration
 
-The application follows a three-stage orchestrated flow with two state-managed interrupts:
+The application follows a three-stage orchestrated flow with two state-managed interrupts (if the following diagram does not display please install the Markdown Preview Mermaid Support extension for VSCode):
 
 ```mermaid
 graph TD
@@ -59,8 +59,6 @@ graph TD
     INT2 --> FINAL[Generate Final Recipe]
     FINAL --> END((End))
 
-    style INT1 fill:#f9f,stroke:#333,stroke-width:2px
-    style INT2 fill:#f9f,stroke:#333,stroke-width:2px
 ```
 
 ## Architectural Design & Decisions
@@ -149,7 +147,7 @@ The tests mock external API calls so they do not require network access or valid
 | **Pydantic v2** | Data validation & typing | Ensures AI and weather API responses conform to expected schemas; reduces runtime errors and simplifies downstream code. |
 | **Tenacity** | Retry logic | Provides exponential backoff and logging hooks to make external calls resilient to transient failures. |
 | **Requests** | HTTP client | Used to call the wttr.in weather API. |
-| **pytz** | Timezone handling | Generates the current time in the configured city. |
+| **System Time** | Time handling | Generates the current time based on the server's local system time. |
 | **Pillow (PIL)** | Image handling | Lightweight, robust library for reading and manipulating images. |
 | **python‑dotenv** | Secret management | Loads environment variables from a .env file, keeping secrets out of source control. |
 
@@ -157,7 +155,7 @@ The tests mock external API calls so they do not require network access or valid
 
 * **Limited weather granularity:** The weather context uses the first entry of current\_condition from wttr.in and may not capture hourly variations. Refining the summary or allowing users to choose a different weather provider could improve accuracy.
 
-* **Fixed time zone:** The time is always computed in the Europe/Dublin timezone. Making this configurable or using the user’s system time would improve internationalisation.
+* **System Time Dependency:** The time is generated from the system's local clock. If deployed on a server with a different timezone, this may not match the user's location.
 
 * **No persistence or personalisation:** Session data is stored in memory via Streamlit’s session state. A production service would persist user history, preferences and feedback in a database.
 
