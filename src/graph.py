@@ -1,7 +1,6 @@
 import os
 import requests
 from datetime import datetime
-import pytz
 from typing import List, Optional
 from langgraph.graph import StateGraph, START, END
 from src.vision import VisionPipeline
@@ -30,9 +29,8 @@ def get_weather_context():
         # Fallback to defaults
         pass
 
-    # Time in Dublin (can be made dynamic but keeping user's request for Dublin)
-    dublin_tz = pytz.timezone('Europe/Dublin')
-    now = datetime.now(dublin_tz)
+    # System Time
+    now = datetime.now()
     time_str = now.strftime("%I %p").lstrip('0')
     
     return f"It is currently {weather_desc} in {city} at {time_str}."
