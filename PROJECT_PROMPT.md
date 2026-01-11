@@ -69,6 +69,7 @@ You are building a modular, production-ready Python application that recommends 
 - **Resource Management**: Always use context managers (`with` statements) to ensure resources like files and images are properly closed.
 - **Model Configuration**: Explicitly set token limits, temperature, and safety settings for every model call.
 - **Integrity**: Verify that all response elements are valid against Pydantic models immediately upon receipt.
-- **Interface Design**: Use a domain-specific exception hierarchy so that others can reuse portions of the codebase with confidence in the correctness and reliability of the results.
+- **Interface Design**: Ensure others can reuse portions of the codebase with confidence in the correctness and reliability of the results.
+- **Interface Design**: Use a domain-specific exception hierarchy.
 
 

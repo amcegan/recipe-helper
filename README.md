@@ -1,4 +1,6 @@
 # Recipe Helper
+This project was created using Google's AntiGravity AI agent. 
+The full project prompt can be found in [PROJECT_PROMPT.md](PROJECT_PROMPT.md).
 
 Recipe Helper is an AI-powered culinary companion that transforms photos of your ingredients into delicious recipes. 
 Using Google's Gemini 2.0 Flash model, the application detects ingredients with high precision and suggests creative, safe, and personalized recipes.
@@ -18,9 +20,9 @@ The application is built with a modular, "safety-first" architecture designed fo
 | File | Audience | Purpose |
 | :--- | :--- | :--- |
 | **[README.md](README.md)** | Users / Devs | Primary project overview, setup, and execution guide. |
-| **[.agent/Agents.md](.agent/Agents.md)** | AI Assistants | Architectural constraints, safety standards, and coding conventions for AI. |
+| **[.agent/Agents.md](.agent/Agents.md)** | AI Assistants | Agent Context, architectural constraints, safety standards, and coding conventions for AI. |
 | **[.agent/rules/python-standards.md](.agent/rules/python-standards.md)** | Devs / AI | Specific coding standards and best practices for Python. |
-| **[PROJECT_PROMPT.md](PROJECT_PROMPT.md)**| Anyone | Comprehensive blueprint for recreating this project from scratch. |
+| **[PROJECT_PROMPT.md](PROJECT_PROMPT.md)**| Devs | Comprehensive blueprint for recreating this project from scratch. |
 | **[workflows/](.agent/workflows/)** | Devs / AI | Automation scripts (e.g., unit test generation) for agentic workflows. |
 
 ## Setup Instructions
@@ -51,7 +53,7 @@ Run the Streamlit server from the project root:
 ```bash
 streamlit run main.py
 ```
-Wait for the local URL (usually `http://localhost:8501`) to appear and open it in your browser.
+If it doesn't open automatically, wait for the local URL (usually `http://localhost:8501`) to appear and open it in your browser.
 
 ### Run Tests
 The project includes a comprehensive suite of unit tests covering vision, recipes, and utility logic:
