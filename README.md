@@ -153,9 +153,11 @@ The tests mock external API calls so they do not require network access or valid
 
 ## Limitations & Future Improvements
 
-* **Limited weather granularity:** The weather context uses the first entry of current\_condition from wttr.in and may not capture hourly variations. Refining the summary or allowing users to choose a different weather provider could improve accuracy.
+* **Limited weather granularity:** The weather context uses the first entry of current\_condition from wttr.in and may not capture hourly variations. 
 
-* **System Time Dependency:** The time is generated from the system's local clock. If deployed on a server with a different timezone, this may not match the user's location.
+* **Weather service has no SLA:** wttr.in is a community service; not ideal for guaranteed SLA/production. It was used as it does not require an API key and a city can be specified as a query parameter which is a lot easier than latitude/longitude required by open-meteo.com.
+
+* **System Time Dependency:** The time is generated from the system's local clock so it is not ideal for production.
 
 * **No persistence or personalisation:** Session data is stored in memory via Streamlit’s session state. A production service would persist user history, preferences and feedback in a database.
 
@@ -168,19 +170,3 @@ The tests mock external API calls so they do not require network access or valid
 The Part B challenge required exploring a new GenAI technology and documenting the learning process. In this version we chose **LangGraph**, a framework for building agent workflows, and integrated an external weather API. See LEARNING.md for a detailed reflection covering resources used, challenges (such as handling images in a serialisable state and validating nested JSON from wttr.in), and insights on how agent‑style orchestration changes the design compared with a linear pipeline. This documentation satisfies the requirement to share what was learned and to enable other developers to extend the work.
 
 ---
-
-[\[1\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/graph.py#:~:text=def%20extract_ingredients_node,Image%20type%3A%20%7Btype%28state.get%28%27image) [\[2\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/graph.py#:~:text=def%20get_weather_context%28%29%3A%20,Dublin) [\[3\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/graph.py#:~:text=def%20check_weather_node,context) [\[4\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/graph.py#:~:text=def%20create_recipe_graph) raw.githubusercontent.com
-
-[https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/graph.py](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/graph.py)
-
-[\[5\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/ui.py#:~:text=,%2A%2AContext%3A%2A%2A%20%7Bst.session_state.graph_state%5B%27context) raw.githubusercontent.com
-
-[https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/ui.py](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/ui.py)
-
-[\[6\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/schemas.py#:~:text=class%20RecipeState%28TypedDict%29%3A%20,FinalRecipe%5D%20request_id%3A%20str) [\[7\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/schemas.py#:~:text=class%20WeatherDesc) raw.githubusercontent.com
-
-[https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/schemas.py](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/schemas.py)
-
-[\[8\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/recipes.py#:~:text=def%20suggest_recipes%28self%2C%20ingredients%3A%20List,preference) raw.githubusercontent.com
-
-[https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/recipes.py](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/recipes.py)
