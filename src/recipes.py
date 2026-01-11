@@ -1,4 +1,5 @@
 from google import genai
+from google.genai import types
 from tenacity import retry, stop_after_attempt, wait_exponential
 from typing import List, Optional
 from src.schemas import Ingredient, RecipeSuggestionList, FinalRecipe
@@ -31,10 +32,18 @@ class RecipePipeline:
             response = self.client.models.generate_content(
                 model=self.model_id,
                 contents=prompt,
-                config={
-                    'response_mime_type': 'application/json',
-                    'response_schema': RecipeSuggestionList,
-                }
+                config=types.GenerateContentConfig(
+                    response_mime_type='application/json',
+                    response_schema=RecipeSuggestionList,
+                    temperature=0.7,
+                    max_output_tokens=2048,
+                    safety_settings=[
+                        types.SafetySetting(
+                            category="HARM_CATEGORY_DANGEROUS_CONTENT",
+                            threshold="BLOCK_MEDIUM_AND_ABOVE"
+                        )
+                    ]
+                )
             )
             if not response.parsed:
                 raise ValueError("Empty parsed response from Gemini")
@@ -66,10 +75,18 @@ class RecipePipeline:
             response = self.client.models.generate_content(
                 model=self.model_id,
                 contents=prompt,
-                config={
-                    'response_mime_type': 'application/json',
-                    'response_schema': FinalRecipe,
-                }
+                config=types.GenerateContentConfig(
+                    response_mime_type='application/json',
+                    response_schema=FinalRecipe,
+                    temperature=0.3,
+                    max_output_tokens=4096,
+                    safety_settings=[
+                        types.SafetySetting(
+                            category="HARM_CATEGORY_DANGEROUS_CONTENT",
+                            threshold="BLOCK_MEDIUM_AND_ABOVE"
+                        )
+                    ]
+                )
             )
             logger.info(f"Final recipe generated: {response.parsed.title}")
             if not response.parsed:

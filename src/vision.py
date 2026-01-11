@@ -1,4 +1,5 @@
 from google import genai
+from google.genai import types
 from tenacity import retry, stop_after_attempt, wait_exponential
 from PIL import Image
 from typing import List, Optional
@@ -27,10 +28,18 @@ class VisionPipeline:
             response = self.client.models.generate_content(
                 model=self.model_id,
                 contents=[INGREDIENT_EXTRACTION_PROMPT, image],
-                config={
-                    'response_mime_type': 'application/json',
-                    'response_schema': IngredientList,
-                }
+                config=types.GenerateContentConfig(
+                    response_mime_type='application/json',
+                    response_schema=IngredientList,
+                    temperature=0.1,
+                    max_output_tokens=2048,
+                    safety_settings=[
+                        types.SafetySetting(
+                            category="HARM_CATEGORY_DANGEROUS_CONTENT",
+                            threshold="BLOCK_MEDIUM_AND_ABOVE"
+                        )
+                    ]
+                )
             )
             
             if not response.parsed:
