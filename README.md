@@ -4,7 +4,7 @@ The full project prompt can be found in [project-prompt.md](project-prompt.md).
 
 Recipe Helper is an AI-powered culinary companion that transforms photos of your ingredients into delicious recipes.
 
-It demonstrates an end‑to‑end workflow using a vision‑capable large language model to extract ingredients from an image, reason about how the ingredients fit together, and synthesise an easy‑to‑follow recipe tailored to the user's preferences. The project emphasises safety, reliability and clear separation of concerns so that the core services can be reused as a library or extended for future work.
+It demonstrates an end‑to‑end workflow using a vision‑capable large language model to extract ingredients from an image, reason about how the ingredients fit together, and synthesize an easy‑to‑follow recipe tailored to the user's preferences. The project emphasizes safety, reliability and clear separation of concerns so that the core services can be reused as a library or extended for future work.
 
 ## Project Documentation
 
@@ -20,7 +20,7 @@ It demonstrates an end‑to‑end workflow using a vision‑capable large langua
 
 At a high level the application operates in three stages:
 
-1. **Ingredient extraction** – A multi‑modal model (gemini‑2.0‑flash) analyses the uploaded image and returns a structured list of ingredients with confidence scores. Validation via Pydantic models ensures that the AI output conforms to the expected schema and that low‑confidence detections can be filtered out using an environment variable.
+1. **Ingredient extraction** – A multi‑modal model (gemini‑2.0‑flash) analyzes the uploaded image and returns a structured list of ingredients with confidence scores. Validation via Pydantic models ensures that the AI output conforms to the expected schema and that low‑confidence detections can be filtered out using an environment variable.
 
 2. **Recipe suggestion** – Given the extracted ingredients and an optional natural‑language user preference (for example, “quick vegetarian lunch”), a text model suggests 3–5 recipe ideas. Each suggestion contains a title, diet tags, required/missing ingredients, estimated prep time, and a rationale explaining why the recipe matches the preference.
 
@@ -30,15 +30,15 @@ Throughout the workflow the application uses a unique request\_id and consistent
 
 ## Architectural Design & Decisions
 
-The project is organised as a small library with a thin Streamlit user interface. This separation makes it easy to test and reuse the business logic without depending on the UI framework.
+The project is organized as a small library with a thin Streamlit user interface. This separation makes it easy to test and reuse the business logic without depending on the UI framework.
 
 * **Modular services and components:**
 
-  * **src/vision.py** encapsulates all image handling and calls to the Gemini vision API. It accepts a PIL Image, constructs a prompt, and returns a IngredientList Pydantic model after filtering by confidence.
+  * **src/vision.py** encapsulates all image handling and calls to the Gemini vision API. It accepts a PIL Image, constructs a prompt, and returns an IngredientList Pydantic model after filtering by confidence.
 
   * **src/recipes.py** contains the recipe pipeline. It exposes two methods – **suggest\_recipes()** for high‑level suggestions and **generate\_final\_recipe()** for the full recipe – both of which enforce schema validation and implement exponential backoff retries.
 
-  * **src/prompts.py** centralises all prompts. Having the text in one place consistent prompt engineering.
+  * **src/prompts.py** centralizes all prompts. Having the text in one place ensures consistent prompt engineering.
 
   * **src/schemas.py** defines strong Pydantic models for ingredients, suggestions and final recipes. These models provide type safety, allow downstream code to reason about AI output, and support response\_schema integration with the Gemini API.
 
@@ -58,7 +58,7 @@ The project is organised as a small library with a thin Streamlit user interface
 
 * **Gemini vs. other models:** Google’s gemini‑2.0‑flash was chosen because it offers integrated multi‑modal support and native structured JSON output via the response\_schema parameter. This reduces prompt engineering overhead and simplifies validation compared with raw text‑only models.
 
-* **Streamlit UI:** Streamlit provides a rapid way to build interactive web apps with minimal boilerplate. It is not production‑optimised but suits the goal of demonstrating the core GenAI workflow. By keeping the UI thin, it’s straightforward to replace with a CLI or REST API if needed.
+* **Streamlit UI:** Streamlit provides a rapid way to build interactive web apps with minimal boilerplate. It is not production‑optimized but suits the goal of demonstrating the core GenAI workflow. By keeping the UI thin, it’s straightforward to replace with a CLI or REST API if needed.
 
 * **Schema enforcement with Pydantic:** Validating AI responses against Pydantic models prevents downstream crashes and surfaces issues early. It also allows us to use response\_schema on the Gemini client, which requests the model to emit JSON conforming to our schema. This approach mitigates hallucination and ensures contract‑driven development.
 
@@ -106,7 +106,7 @@ If it doesn't open automatically, wait for the local URL (usually `http://localh
 
 1. Upload an image of your ingredients (supported formats: PNG/JPG).
 
-2. Click **Detect Ingredients**. The application calls the vision pipeline and displays each ingredient with a colour‑coded confidence indicator.
+2. Click **Detect Ingredients**. The application calls the vision pipeline and displays each ingredient with a color‑coded confidence indicator.
 
 3. Enter an optional preference (for example, “quick vegetarian lunch”) in the text input field. Click **Generate Recipe Suggestions** to receive 3–5 ideas tailored to your ingredients and preferences.
 
@@ -137,7 +137,7 @@ The tests use mocking to simulate API responses and therefore do not require an 
 
 * **LLM dependency and cost:** The quality of the output depends on the underlying Gemini model and may change over time. Running the model requires an API key and may incur costs.
 
-* **No persistence:** All state is held in memory via Streamlit’s session. In a production system you might persist previous sessions, user feedback or favourite recipes.
+* **No persistence:** All state is held in memory via Streamlit’s session. In a production system you might persist previous sessions, user feedback or favorite recipes.
 
 * **Scalability:** Streamlit is single‑process and not suitable for high‑traffic environments. To scale, the service layer (VisionPipeline and RecipePipeline) could be exposed via a REST or gRPC API behind a load balancer, and the UI moved to a separate front‑end.
 
@@ -162,7 +162,7 @@ To transition this proof-of-concept into a production-grade service, the followi
 5.  **Observability**: Integrate structured logging (e.g., OpenTelemetry) to trace requests across the graph nodes and monitor LLM latency/costs in real-time.
 
 ## The Project Creation Prompt
-The prompt in project-prompt.md is a sanitised (by Antigravity) version of the actual prompt used to create the project. The real prompt is as follows:
+The prompt in project-prompt.md is a sanitized (by Antigravity) version of the actual prompt used to create the project. The real prompt used is as follows:
 
 ```text 
 You are building a modular, production‑ready Python application that recommends recipes from photos of ingredients. The goal is not only to prototype functionality but to demonstrate professional software engineering practices: clear separation of concerns, rigorous validation, robust error handling, secure agent configuration, and well‑structured prompts.
@@ -238,7 +238,7 @@ Development workflow
 
 Development Guideline
 * Use well-named variables and functions that convey intent 
-* Externalise prompts to a prompts module.
+* Externalize prompts to a prompts module.
 * Add tenacity retry to service calls. Ensure logger logs retry and clearly captures specific exception (like 429 or 503). 
 * Use context managers to ensure resources are properly closed, preventing memory leaks.
 * Set token limits, temperature and safety settings on model calls.
