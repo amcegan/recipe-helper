@@ -196,7 +196,7 @@ To transition this proof-of-concept into a production-grade service, the followi
 5.  **Observability**: Integrate structured logging (e.g., OpenTelemetry) to trace requests across the graph nodes and monitor LLM latency/costs in real-time.
 
 ## The Prompt Used to Refactor Step A to Step B
-The prompt in project-prompt.md is a sanitised (by Antigravity) version of the actual prompt used to refactor the Step A to Step B. The real prompt is as follows:
+The prompt in project-prompt.md is a sanitized (by Antigravity) version of the actual prompt used to refactor the Step A to Step B. The real prompt is as follows:
 
 ```text 
 I want to refactor the project.
@@ -213,7 +213,7 @@ Ensure each node properly handles exceptions and validates model outputs. Use th
 
 Development Guideline
 * Use well-named variables and functions that convey intent 
-* Externalise prompts to a prompts module.
+* Externalize prompts to a prompts module.
 * Add tenacity retry to service calls. Ensure logger logs retry and clearly captures specific exception (like 429 or 503). 
 * Use context managers to ensure resources are properly closed, preventing memory leaks.
 * Set token limits, temperature and safety settings on model calls.

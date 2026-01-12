@@ -4,22 +4,22 @@ This document captures the learning process, challenges and insights gained whil
 
 ## Google Antigravity
 
-While I had used **Google Antigravity** in the past month for a small personal projects, I had not yet used it for a serious, production-style application. This assessment provided the perfect opportunity to deepen that knowledge.
+While I had used **Google Antigravity** in the past month for small personal projects, I had not yet used it for a serious, production-style application. This assessment provided the perfect opportunity to deepen that knowledge.
 Antigravity is an excellent tool for code generation and refactoring. Any issues I had were due to poor prompting on my behalf; I would highly recommend.
-Antgravity was excellent in solving the bugs/issue (see: Challenges Encountered section), providing excellent educational feedback on the code and refactoring suggestions that I just had to accept. Antigravity provides a full markdown report of the changes it made, which is very helpful for learning.
+Antigravity was excellent in solving the bugs/issue (see: Challenges Encountered section), providing excellent educational feedback on the code and refactoring suggestions that I just had to accept. Antigravity provides a full markdown report of the changes it made, which is very helpful for learning.
 
 ## Gemini 2.0 Flash
 
-Additionally, this was my **first time using the Gemini 2.0 Flash model**. I wanted to explore it specifically for its **ease of use** in a fewkey areas:
+Additionally, this was my first time using the Gemini 2.0 Flash model. I wanted to explore it specifically for its **ease of use** in a few key areas:
 1.  **Unified Multimodal support**: Eliminating the need for separate OCR/vision and text models simplified the architecture significantly.
 2.  **Native JSON Output**: The ability to enforce Pydantic schemas via `response_schema` made validation straightforward, avoiding the "retry-parse-fail" loops common with older LLMs.
 3.  **Verify Ease of Use**: Gemini 2.0 Flash is marketed as easy to use, and I wanted to verify.
 
-## LangGraph?
+## Why LangGraph?
 
-I have used LangGraph in previous projects, but I had strictly used its older, linear graph features. I had **not** yet utilized the newer **Human-in-the-Loop (HITL)** capabilities, specifically the `interrupt_before` and functionality.
+I have used LangGraph in previous projects, but I had strictly used its older version, for multi-step workflows. I had **not** yet utilized the newer **Human-in-the-Loop (HITL)** capabilities, which unsurprisingly needs a UI. It was a great learning experience as I had not foreseen the complexity it necessarily brought to the UI code.
 
-To satisfy the agent-framework challenge, I refactored the linear pipeline into a stateful graph to test these specific features:
+To satisfy the agent-framework challenge learning aspect, I refactored the linear pipeline into a stateful graph. As well as the aforementioned UI learnings, the other features/experiences worth mentioning are:
 
 *   **Interrupts**: Pausing the graph to let the user review ingredients *before* generation, and selecting a recipe *before* finalization.
 *   **State Persistence**: Using `MemorySaver` to hold the application state while waiting for user input.
@@ -30,9 +30,6 @@ To satisfy the agent-framework challenge, I refactored the linear pipeline into 
 
 * The graph state can be updated mid‑execution using graph.update\_state()—essential for injecting preferences or selected recipes from the UI.
 
-## Integrating External Data
-
-Part B encouraged integrating external tools or data. I chose to fetch live weather data and the current time to provide situational context in prompts. Instead of requiring latitude/longitude (as with Open‑Meteo), I used the [wttr.in](https://wttr.in) service, which accepts a city name does not need an API key; this balances the community nature of the service and lack of an SLA.
 
 ## UI Refactor
 
@@ -61,11 +58,11 @@ Refactoring the Streamlit UI into a three‑stage flow required understanding ho
 
 * AutoGPT was not used as it was not considered robust enough for most high‑stakes production use.
 
-* CrewAI seemed problematic.CrewAI supports feedback, but it is not designed around deterministic pause/resume of a state graph, which is critical for UI-driven flows like Streamlit.
+* CrewAI seemed problematic. CrewAI supports feedback, but it is not designed around deterministic pause/resume of a state graph, which is critical for UI-driven flows like Streamlit.
 
-* I have done alot of work wit RAG in the past and did not think it worth including.
+* I have done a lot of work with RAG in the past and did not think it worth including.
 
-* It would be benefical to cache the weather responses.
+* It would be beneficial to cache the weather responses.
 
 * If I had more time, I would demonstrate prompt chaining using either
     - A. Two‑stage suggestion generation: Use an initial prompt to brainstorm a larger set of recipe ideas (say, 10–15 titles) based on the ingredients and context. Feed those titles into a second prompt that ranks them or filters them against user preferences and dietary constraints, returning only the top 3–5 suggestions with rationales. This makes the selection more controllable and lets you inspect the ranking logic.
