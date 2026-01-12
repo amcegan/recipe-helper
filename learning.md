@@ -2,16 +2,20 @@
 
 This document captures the learning process, challenges and insights gained while refactoring the recipe helper project to satisfy the Part B “Learning & Exploration Challenge” of the technical assessment. I also mention what I learned from the Part A challenge though this does go against the instructions given.
 
-## Context & Motivation
+## Google Antigravity
 
-While I had used **Google Antigravity** in the past for small personal projects, I had not yet used it for a serious, production-style application. This assessment provided the perfect opportunity to deepen that knowledge.
+While I had used **Google Antigravity** in the past month for a small personal projects, I had not yet used it for a serious, production-style application. This assessment provided the perfect opportunity to deepen that knowledge.
+Antigravity is an excellent tool for code generation and refactoring. Any issues I had were due to poor prompting on my behalf; I would highly recommend.
+Antgravity was excellent in solving the bugs/issue (see: Challenges Encountered section), providing excellent educational feedback on the code and refactoring suggestions that I just had to accept. Antigravity provides a full markdown report of the changes it made, which is very helpful for learning.
+
+## Gemini 2.0 Flash
 
 Additionally, this was my **first time using the Gemini 2.0 Flash model**. I wanted to explore it specifically for its **ease of use** in a fewkey areas:
 1.  **Unified Multimodal support**: Eliminating the need for separate OCR/vision and text models simplified the architecture significantly.
 2.  **Native JSON Output**: The ability to enforce Pydantic schemas via `response_schema` made validation straightforward, avoiding the "retry-parse-fail" loops common with older LLMs.
 3.  **Verify Ease of Use**: Gemini 2.0 Flash is marketed as easy to use, and I wanted to verify.
 
-## Why LangGraph?
+## LangGraph?
 
 I have used LangGraph in previous projects, but I had strictly used its older, linear graph features. I had **not** yet utilized the newer **Human-in-the-Loop (HITL)** capabilities, specifically the `interrupt_before` and functionality.
 
@@ -28,7 +32,7 @@ To satisfy the agent-framework challenge, I refactored the linear pipeline into 
 
 ## Integrating External Data
 
-Part B encouraged integrating external tools or data. I chose to fetch live weather data and the current time to provide situational context in prompts. Instead of requiring latitude/longitude (as with Open‑Meteo), I used the [wttr.in](https://wttr.in) service, which does not need an API key and accepts a city name; this balances the community nature of the service and lack of an SLA.
+Part B encouraged integrating external tools or data. I chose to fetch live weather data and the current time to provide situational context in prompts. Instead of requiring latitude/longitude (as with Open‑Meteo), I used the [wttr.in](https://wttr.in) service, which accepts a city name does not need an API key; this balances the community nature of the service and lack of an SLA.
 
 ## UI Refactor
 
@@ -40,7 +44,7 @@ Refactoring the Streamlit UI into a three‑stage flow required understanding ho
 
 * Buttons should reset or update parts of the session state to ensure that old results do not leak into new runs.
 
-## Challenges Encountered
+## Challenges Encountered 
 
 * **Serialisation of complex types:** Passing non‑serialisable objects (PIL images) through LangGraph caused errors. Converting images to bytes and clearing them after use solved this.
 
@@ -49,6 +53,7 @@ Refactoring the Streamlit UI into a three‑stage flow required understanding ho
 * **Time formatting:** Ensuring the time string did not contain leading zeros (e.g., “05 PM”) required a small hack: using strftime("%I %p").lstrip('0').
 
 * **Test adaptation:** The existing tests needed updating to include the new context parameter. 
+
 
 ## Insights & Next Steps
 
@@ -63,8 +68,8 @@ Refactoring the Streamlit UI into a three‑stage flow required understanding ho
 * It would be benefical to cache the weather responses.
 
 * If I had more time, I would demonstrate prompt chaining using either
-    A. Two‑stage suggestion generation: Use an initial prompt to brainstorm a larger set of recipe ideas (say, 10–15 titles) based on the ingredients and context. Feed those titles into a second prompt that ranks them or filters them against user preferences and dietary constraints, returning only the top 3–5 suggestions with rationales. This makes the selection more controllable and lets you inspect the ranking logic.
-    B. Recipe quality check: After generating a final recipe, run a follow‑up prompt that reviews the recipe for clarity, completeness and safety (for example, checking that all steps use available ingredients and that cooking times are consistent). If issues are detected, the chain could trigger a regeneration or adjust the instructions.
+    - A. Two‑stage suggestion generation: Use an initial prompt to brainstorm a larger set of recipe ideas (say, 10–15 titles) based on the ingredients and context. Feed those titles into a second prompt that ranks them or filters them against user preferences and dietary constraints, returning only the top 3–5 suggestions with rationales. This makes the selection more controllable and lets you inspect the ranking logic.
+    - B. Recipe quality check: After generating a final recipe, run a follow‑up prompt that reviews the recipe for clarity, completeness and safety (for example, checking that all steps use available ingredients and that cooking times are consistent). If issues are detected, the chain could trigger a regeneration or adjust the instructions.
 
 ---
 
