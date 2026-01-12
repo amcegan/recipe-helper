@@ -195,4 +195,28 @@ To transition this proof-of-concept into a production-grade service, the followi
 4.  **Weather Service SLA**: Replace the community-hosted `wttr.in` with a commercial provider (e.g., OpenWeatherMap or Google Maps Platform) to guarantee uptime and latency SLAs.
 5.  **Observability**: Integrate structured logging (e.g., OpenTelemetry) to trace requests across the graph nodes and monitor LLM latency/costs in real-time.
 
+## The Prompt Used to Refactor Step A to Step B
+The prompt in project-prompt.md is a sanitised (by Antigravity) version of the actual prompt used to refactor the Step A to Step B. The real prompt is as follows:
+
+```text 
+I want to refactor the project.
+Please build a langgraph.StateGraph (or equivalent) that orchestrates my existing recipe helper services. The graph should have the following five nodes, executed in order:
+1. Extract ingredients – Create a node that accepts an uploaded image, instantiates VisionPipeline with the configured Gemini API key, and calls its extract_ingredients() method to return a validated IngredientList.
+2. Check weather and time – Add a node that reads my latitude/longitude from an environment variable (e.g. LOCATION_LAT and LOCATION_LON) and fetches current weather conditions using the Open‑Meteo free API. Combine the weather description (temperature, precipitation) with the current local time (use datetime.now() with my Dublin timezone) to produce a short string such as:
+“It is currently 5 °C and raining in Dublin at 3 PM.”
+Return this string so it can be used as additional context for recipe choices.
+3. Suggest recipes – Define a node that accepts the ingredient list and the weather/time context, instantiates RecipePipeline, and calls its suggest_recipes() method. Pass the ingredient names and a prompt that includes the weather and time (e.g. “It is currently 5 °C and raining …; suggest appropriate dishes”), along with any user preference captured via a text input. The node should return the RecipeSuggestionList.
+4. Human review – Add a node that pauses the graph and waits for the user to choose one of the suggested recipes. Use LangGraph’s human‑in‑the‑loop mechanism (e.g. raise langgraph.Pause()) to halt execution until the selection is provided. The selected recipe title should be passed to the next node.
+5. Generate final recipe – Finally, create a node that calls RecipePipeline.generate_final_recipe() with the chosen title, the original ingredients, and the same weather/time context. Return the resulting FinalRecipe model to the user.
+
+Ensure each node properly handles exceptions and validates model outputs. Use the existing logging and retry mechanisms where appropriate, and include the weather/time context in prompts to tailor recipes to current conditions.
+
+Development Guideline
+* Use well-named variables and functions that convey intent 
+* Externalise prompts to a prompts module.
+* Add tenacity retry to service calls. Ensure logger logs retry and clearly captures specific exception (like 429 or 503). 
+* Use context managers to ensure resources are properly closed, preventing memory leaks.
+* Set token limits, temperature and safety settings on model calls.
+* Verify that response elements are valid against Pydantic models.
+```
 ---
