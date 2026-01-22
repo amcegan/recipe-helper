@@ -66,6 +66,7 @@ def render_ui():
                 # Start the graph
                 with st.spinner("Analyzing ingredients and checking weather..."):
                     try:
+                        # Stream events from the graph to update state incrementally
                         for event in st.session_state.graph.stream(
                             st.session_state.graph_state,
                             st.session_state.config
