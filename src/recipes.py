@@ -5,7 +5,7 @@ from typing import List, Optional
 from src.schemas import Ingredient, RecipeSuggestionList, FinalRecipe
 from src.logger import get_request_logger, log_retry
 from src.prompts import RECIPE_SUGGESTION_PROMPT, FINAL_RECIPE_PROMPT
-from src.exceptions import AppRecipeError, AppValidationError
+from src.exceptions import AppRecipeError, AppValidationError, RateLimitError
 
 
 class RecipePipeline:
@@ -61,8 +61,15 @@ class RecipePipeline:
             return response.parsed
         except Exception as e:
             logger.error(f"Error suggesting recipes: {str(e)}")
-            if isinstance(e, (AppRecipeError, AppValidationError)):
+            if isinstance(e, (AppRecipeError, AppValidationError, RateLimitError)):
                 raise e
+            
+            # Check for 429 Rate Limit
+            if hasattr(e, 'code') and e.code == 429:
+                raise RateLimitError(f"API Rate limit exceeded: {str(e)}") from e
+            if "429" in str(e):
+                 raise RateLimitError(f"API Rate limit exceeded (detected in message): {str(e)}") from e
+
             raise AppRecipeError(f"Unexpected error in Recipe Pipeline (suggestions): {str(e)}") from e
 
     @retry(
@@ -115,6 +122,13 @@ class RecipePipeline:
             return response.parsed
         except Exception as e:
             logger.error(f"Error generating final recipe: {str(e)}")
-            if isinstance(e, (AppRecipeError, AppValidationError)):
+            if isinstance(e, (AppRecipeError, AppValidationError, RateLimitError)):
                 raise e
+            
+            # Check for 429 Rate Limit
+            if hasattr(e, 'code') and e.code == 429:
+                raise RateLimitError(f"API Rate limit exceeded: {str(e)}") from e
+            if "429" in str(e):
+                 raise RateLimitError(f"API Rate limit exceeded (detected in message): {str(e)}") from e
+
             raise AppRecipeError(f"Unexpected error in Recipe Pipeline (final): {str(e)}") from e

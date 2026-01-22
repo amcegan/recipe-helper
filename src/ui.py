@@ -5,6 +5,7 @@ from src.vision import VisionPipeline
 from src.recipes import RecipePipeline
 from src.logger import get_request_logger
 import os
+from src.exceptions import RateLimitError
 from dotenv import load_dotenv, find_dotenv
 
 load_dotenv(find_dotenv())
@@ -44,6 +45,9 @@ def render_ui():
                         ingredients = vision_pipeline.extract_ingredients(image, request_id)
                         st.session_state.ingredients = ingredients.ingredients
                         st.success(f"Detected {len(ingredients.ingredients)} ingredients!")
+                    except RateLimitError as e:
+                        st.warning("⚠️ API Rate limit reached. Please wait a moment before trying again.")
+                        st.info(f"Details: {e}")
                     except Exception as e:
                         st.error(f"Error extracting ingredients: {e}")
 
@@ -67,6 +71,9 @@ def render_ui():
                         request_id
                     )
                     st.session_state.suggestions = suggestions.suggestions
+                except RateLimitError as e:
+                    st.warning("⚠️ API Rate limit reached. Please wait a moment before trying again.")
+                    st.info(f"Details: {e}")
                 except Exception as e:
                     st.error(f"Error generating suggestions: {e}")
 
@@ -87,6 +94,9 @@ def render_ui():
                         request_id
                     )
                     st.session_state.final_recipe = final_recipe
+                except RateLimitError as e:
+                    st.warning("⚠️ API Rate limit reached. Please wait a moment before trying again.")
+                    st.info(f"Details: {e}")
                 except Exception as e:
                     st.error(f"Error generating final recipe: {e}")
 
@@ -98,7 +108,6 @@ def render_ui():
         st.subheader("Ingredients")
         for item in recipe.ingredients:
             st.write(f"- {item}")
-        st.info(f"**Cooking Time:** {recipe.cooking_time}")
 
         st.subheader("Instructions")
         for i, step in enumerate(recipe.steps, 1):

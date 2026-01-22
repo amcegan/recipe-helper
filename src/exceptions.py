@@ -17,3 +17,7 @@ class AppVisionError(AppAPIError):
 class AppRecipeError(AppAPIError):
     """Exception raised for errors in the Recipe Pipeline."""
     pass
+
+class RateLimitError(AppAPIError):
+    """Exception raised when API quota or rate limit is exceeded."""
+    pass
