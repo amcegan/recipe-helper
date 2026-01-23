@@ -1,6 +1,6 @@
 from google import genai
 from google.genai import types
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, stop_after_attempt, wait_random_exponential
 from typing import List, Optional
 from src.schemas import Ingredient, RecipeSuggestionList, FinalRecipe
 from src.logger import get_request_logger, log_retry
@@ -15,11 +15,11 @@ class RecipePipeline:
 
     @retry(
         stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=2, max=10),
+        wait=wait_random_exponential(multiplier=1, min=2, max=10),
         after=log_retry,
         reraise=True
     )
-    def suggest_recipes(self, ingredients: List[Ingredient], preference: Optional[str], request_id: str) -> RecipeSuggestionList:
+    def suggest_recipes(self, ingredients: List[Ingredient], preference: Optional[str], request_id: str, seed: Optional[int] = None) -> RecipeSuggestionList:
         logger = get_request_logger(request_id)
         logger.debug(f"ENTERING: suggest_recipes with request_id={request_id}, preference={preference}")
         logger.info(f"Generating recipe suggestions with preference: {preference}")
@@ -38,6 +38,7 @@ class RecipePipeline:
                     response_mime_type='application/json',
                     response_schema=RecipeSuggestionList,
                     temperature=0.7,
+                    seed=seed,
                     max_output_tokens=2048,
                     safety_settings=[
                         types.SafetySetting(
@@ -74,11 +75,11 @@ class RecipePipeline:
 
     @retry(
         stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=2, max=10),
+        wait=wait_random_exponential(multiplier=1, min=2, max=10),
         after=log_retry,
         reraise=True
     )
-    def generate_final_recipe(self, suggestion_title: str, ingredients: List[Ingredient], preference: Optional[str], request_id: str) -> FinalRecipe:
+    def generate_final_recipe(self, suggestion_title: str, ingredients: List[Ingredient], preference: Optional[str], request_id: str, seed: Optional[int] = None) -> FinalRecipe:
         logger = get_request_logger(request_id)
         logger.debug(f"ENTERING: generate_final_recipe for {suggestion_title}, request_id={request_id}")
         logger.info(f"Generating final recipe for: {suggestion_title}")
@@ -98,6 +99,7 @@ class RecipePipeline:
                     response_mime_type='application/json',
                     response_schema=FinalRecipe,
                     temperature=0.3,
+                    seed=seed,
                     max_output_tokens=4096,
                     safety_settings=[
                         types.SafetySetting(

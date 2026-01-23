@@ -1,9 +1,9 @@
 import os
 from google import genai
 from google.genai import types
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, stop_after_attempt, wait_random_exponential
 from PIL import Image
-from typing import List
+from typing import List, Optional
 from src.schemas import IngredientList
 from src.logger import get_request_logger, log_retry
 from src.prompts import INGREDIENT_EXTRACTION_PROMPT
@@ -22,11 +22,11 @@ class VisionPipeline:
     
     @retry(
         stop=stop_after_attempt(3),
-        wait=wait_exponential(multiplier=1, min=2, max=10),
+        wait=wait_random_exponential(multiplier=1, min=2, max=10),
         after=log_retry,
         reraise=True
     )
-    def extract_ingredients(self, image: Image.Image, request_id: str) -> IngredientList:
+    def extract_ingredients(self, image: Image.Image, request_id: str, seed: Optional[int] = None) -> IngredientList:
         logger = get_request_logger(request_id)
         logger.debug(f"ENTERING: extract_ingredients with request_id={request_id}")
         logger.info("Starting ingredient extraction from image")
@@ -39,6 +39,7 @@ class VisionPipeline:
                     response_mime_type='application/json',
                     response_schema=IngredientList,
                     temperature=0.1,
+                    seed=seed,
                     max_output_tokens=2048,
                     safety_settings=[
                         types.SafetySetting(
