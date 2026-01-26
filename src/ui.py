@@ -54,11 +54,28 @@ def render_ui():
     if "ingredients" in st.session_state:
         st.divider()
         st.header("2. Detected Ingredients")
+        
+        # Display existing ingredients
         for ing in st.session_state.ingredients:
             confidence_color = "green" if ing.confidence > 0.8 else "orange" if ing.confidence > 0.5 else "red"
             st.markdown(f"- **{ing.name}** (Confidence: :{confidence_color}[{ing.confidence:.2f}])")
             if ing.notes:
                 st.caption(f"Note: {ing.notes}")
+
+        # Manual entry
+        st.subheader("Add Extra Ingredient")
+        col1, col2 = st.columns([3, 1])
+        with col1:
+            new_ing_name = st.text_input("Ingredient name", key="new_ing_name", label_visibility="collapsed", placeholder="Enter ingredient name...")
+        with col2:
+            if st.button("Add", use_container_width=True):
+                if new_ing_name.strip():
+                    from src.schemas import Ingredient
+                    new_ing = Ingredient(name=new_ing_name.strip(), confidence=1.0, notes="Manually added")
+                    st.session_state.ingredients.append(new_ing)
+                    st.rerun()
+
+        st.divider()
 
         user_preference = st.text_input("Any preferences? (e.g., 'quick vegetarian lunch')", "")
 
