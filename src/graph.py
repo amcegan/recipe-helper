@@ -47,6 +47,13 @@ from langgraph.checkpoint.memory import MemorySaver
 import io
 from PIL import Image
 
+def process_image(b):
+    """Helper for multiprocessing image decoding."""
+    import io
+    with Image.open(io.BytesIO(b)) as img:
+        img.load() # Force loading of pixels
+        return img
+
 async def extract_ingredients_node(state: RecipeState):
     logger = get_request_logger(state['request_id'])
     logger.debug(f"ENTERING Node: extract_ingredients - Image type: {type(state.get('image'))}")
@@ -64,12 +71,6 @@ async def extract_ingredients_node(state: RecipeState):
     try:
         # Decode bytes to PIL Image
         image_bytes = state['image']
-        # We need a function to wrap the PIL open + load because Pilot/Image.open is lazy
-        def process_image(b):
-            with Image.open(io.BytesIO(b)) as img:
-                img.load() # Force loading of pixels
-                return img
-
         pil_image = await run_cpu_bound(process_image, image_bytes)
         ingredients = await vision_pipeline.extract_ingredients(pil_image, state['request_id'])
         

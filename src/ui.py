@@ -13,6 +13,13 @@ load_dotenv(find_dotenv())
 
 from src.graph import create_recipe_graph
 
+def image_to_bytes(img):
+    """Helper for multiprocessing image conversion."""
+    import io
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return buf.getvalue()
+
 async def run_graph(graph, inputs, config, state_ref):
     """Helper to run the graph asynchronously and update state."""
     try:
@@ -61,13 +68,6 @@ def render_ui():
         with Image.open(uploaded_file) as image:
             st.image(image, caption="Uploaded Image", width="stretch")
             
-            # Convert PIL Image to bytes for LangGraph serialization
-            import io
-            def image_to_bytes(img):
-                buf = io.BytesIO()
-                img.save(buf, format="PNG")
-                return buf.getvalue()
-
             st.session_state.graph_state["image"] = asyncio.run(run_cpu_bound(image_to_bytes, image))
 
             if st.button("Detect Ingredients"):
