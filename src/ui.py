@@ -33,23 +33,42 @@ def render_ui():
     recipe_pipeline = RecipePipeline(api_key)
 
     st.header("1. Upload Ingredients")
-    uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
+    uploaded_files = st.file_uploader("Choose images...", type=["jpg", "jpeg", "png"], accept_multiple_files=True)
 
-    if uploaded_file:
-        with Image.open(uploaded_file) as image:
-            st.image(image, caption="Uploaded Image", width='content')
+    if uploaded_files:
+        cols = st.columns(len(uploaded_files))
+        for i, uploaded_file in enumerate(uploaded_files):
+            with Image.open(uploaded_file) as image:
+                cols[i].image(image, caption=f"Image {i+1}", use_container_width=True)
 
-            if st.button("Detect Ingredients"):
-                with st.spinner("Analyzing image..."):
-                    try:
-                        ingredients = vision_pipeline.extract_ingredients(image, request_id)
-                        st.session_state.ingredients = ingredients.ingredients
-                        st.success(f"Detected {len(ingredients.ingredients)} ingredients!")
-                    except RateLimitError as e:
-                        st.warning("⚠️ API Rate limit reached. Please wait a moment before trying again.")
-                        st.info(f"Details: {e}")
-                    except Exception as e:
-                        st.error(f"Error extracting ingredients: {e}")
+        if st.button("Detect Ingredients"):
+            with st.spinner("Analyzing all images..."):
+                try:
+                    all_detected_ingredients = []
+                    # Keep track of unique ingredient names to avoid duplicates across photos
+                    seen_names = set()
+                    
+                    for uploaded_file in uploaded_files:
+                        with Image.open(uploaded_file) as image:
+                            ingredients = vision_pipeline.extract_ingredients(image, request_id)
+                            for ing in ingredients.ingredients:
+                                if ing.name.lower() not in seen_names:
+                                    all_detected_ingredients.append(ing)
+                                    seen_names.add(ing.name.lower())
+                                else:
+                                    # Update confidence if we see it again and it's higher? 
+                                    # Or just skip. For now, let's just keep the first occurrence or highest confidence.
+                                    for existing in all_detected_ingredients:
+                                        if existing.name.lower() == ing.name.lower():
+                                            existing.confidence = max(existing.confidence, ing.confidence)
+
+                    st.session_state.ingredients = all_detected_ingredients
+                    st.success(f"Detected {len(all_detected_ingredients)} unique ingredients across {len(uploaded_files)} images!")
+                except RateLimitError as e:
+                    st.warning("⚠️ API Rate limit reached. Please wait a moment before trying again.")
+                    st.info(f"Details: {e}")
+                except Exception as e:
+                    st.error(f"Error extracting ingredients: {e}")
 
     if "ingredients" in st.session_state:
         st.divider()
