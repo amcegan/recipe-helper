@@ -7,3 +7,4 @@ Pillow
 tenacity
 langgraph
 requests
+httpx

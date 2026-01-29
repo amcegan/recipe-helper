@@ -26,13 +26,13 @@ class VisionPipeline:
         after=log_retry,
         reraise=True
     )
-    def extract_ingredients(self, image: Image.Image, request_id: str) -> IngredientList:
+    async def extract_ingredients(self, image: Image.Image, request_id: str) -> IngredientList:
         logger = get_request_logger(request_id)
         logger.debug(f"ENTERING: extract_ingredients with request_id={request_id}")
         logger.info("Starting ingredient extraction from image")
 
         try:
-            response = self.client.models.generate_content(
+            response = await self.client.aio.models.generate_content(
                 model=self.model_id,
                 contents=[INGREDIENT_EXTRACTION_PROMPT, image],
                 config=types.GenerateContentConfig(

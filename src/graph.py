@@ -1,5 +1,5 @@
 import os
-import requests
+import httpx
 from datetime import datetime
 from typing import List, Optional
 from langgraph.graph import StateGraph, START, END
@@ -12,7 +12,7 @@ from src.exceptions import AppVisionError, AppRecipeError, AppValidationError
 # Constants
 WEATHER_API_BASE_URL = "https://wttr.in"
 
-def get_weather_context():
+async def get_weather_context():
     """Fetches weather context from wttr.in and current Dublin time."""
     city = os.getenv("LOCATION_CITY", "Dublin")
     
@@ -20,14 +20,15 @@ def get_weather_context():
     weather_desc = "mild weather"
     try:
         url = f"{WEATHER_API_BASE_URL}/{city}?format=j1"
-        response = requests.get(url, timeout=5)
-        if response.status_code == 200:
-            # Validate with Pydantic
-            weather_data = WeatherResponse.model_validate(response.json())
-            current = weather_data.current_condition[0]
-            temp = current.temp_C
-            desc = current.weatherDesc[0].value.lower()
-            weather_desc = f"{temp} °C and {desc}"
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url, timeout=5.0)
+            if response.status_code == 200:
+                # Validate with Pydantic
+                weather_data = WeatherResponse.model_validate(response.json())
+                current = weather_data.current_condition[0]
+                temp = current.temp_C
+                desc = current.weatherDesc[0].value.lower()
+                weather_desc = f"{temp} °C and {desc}"
     except Exception:
         # Fallback to defaults
         pass
@@ -45,7 +46,7 @@ from langgraph.checkpoint.memory import MemorySaver
 import io
 from PIL import Image
 
-def extract_ingredients_node(state: RecipeState):
+async def extract_ingredients_node(state: RecipeState):
     logger = get_request_logger(state['request_id'])
     logger.debug(f"ENTERING Node: extract_ingredients - Image type: {type(state.get('image'))}")
     
@@ -63,7 +64,7 @@ def extract_ingredients_node(state: RecipeState):
         # Decode bytes to PIL Image
         image_bytes = state['image']
         with Image.open(io.BytesIO(image_bytes)) as pil_image:
-            ingredients = vision_pipeline.extract_ingredients(pil_image, state['request_id'])
+            ingredients = await vision_pipeline.extract_ingredients(pil_image, state['request_id'])
         
         # We null out the image to keep the checkpoint size small/serializable
         return {"ingredients": ingredients.ingredients, "image": None}
@@ -71,13 +72,13 @@ def extract_ingredients_node(state: RecipeState):
         logger.error(f"Error in extraction node: {e}")
         return {"error": str(e)}
 
-def check_weather_node(state: RecipeState):
+async def check_weather_node(state: RecipeState):
     logger = get_request_logger(state['request_id'])
     logger.debug("ENTERING Node: check_weather")
-    context = get_weather_context()
+    context = await get_weather_context()
     return {"context": context}
 
-def suggest_recipes_node(state: RecipeState):
+async def suggest_recipes_node(state: RecipeState):
     logger = get_request_logger(state['request_id'])
     logger.debug("ENTERING Node: suggest_recipes")
     
@@ -85,7 +86,7 @@ def suggest_recipes_node(state: RecipeState):
     recipe_pipeline = RecipePipeline(api_key)
     
     try:
-        suggestions = recipe_pipeline.suggest_recipes(
+        suggestions = await recipe_pipeline.suggest_recipes(
             state['ingredients'],
             state['user_preference'],
             state['context'],
@@ -96,11 +97,11 @@ def suggest_recipes_node(state: RecipeState):
         logger.error(f"Error in suggestions node: {e}")
         return {"error": str(e)}
 
-def human_review_node(state: RecipeState):
+async def human_review_node(state: RecipeState):
     # This node will be interrupted.
     return state
 
-def generate_final_recipe_node(state: RecipeState):
+async def generate_final_recipe_node(state: RecipeState):
     logger = get_request_logger(state['request_id'])
     logger.debug("ENTERING Node: generate_final_recipe")
     
@@ -108,7 +109,7 @@ def generate_final_recipe_node(state: RecipeState):
     recipe_pipeline = RecipePipeline(api_key)
     
     try:
-        final_recipe = recipe_pipeline.generate_final_recipe(
+        final_recipe = await recipe_pipeline.generate_final_recipe(
             state['selected_recipe'],
             state['ingredients'],
             state['user_preference'],

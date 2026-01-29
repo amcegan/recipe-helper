@@ -1,5 +1,6 @@
 import streamlit as st
 import uuid
+import asyncio
 from PIL import Image
 from src.vision import VisionPipeline
 from src.recipes import RecipePipeline
@@ -10,6 +11,15 @@ from dotenv import load_dotenv, find_dotenv
 load_dotenv(find_dotenv())
 
 from src.graph import create_recipe_graph
+
+async def run_graph(graph, inputs, config, state_ref):
+    """Helper to run the graph asynchronously and update state."""
+    try:
+        async for event in graph.astream(inputs, config):
+            node_name = next(iter(event))
+            state_ref.update(event[node_name])
+    except Exception as e:
+        st.error(f"Graph Error: {e}")
 
 def render_ui():
     st.set_page_config(page_title="Recipe Helper", page_icon="🍳", layout="wide")
@@ -65,16 +75,12 @@ def render_ui():
                 
                 # Start the graph
                 with st.spinner("Analyzing ingredients and checking weather..."):
-                    try:
-                        # Stream events from the graph to update state incrementally
-                        for event in st.session_state.graph.stream(
-                            st.session_state.graph_state,
-                            st.session_state.config
-                        ):
-                            node_name = next(iter(event))
-                            st.session_state.graph_state.update(event[node_name])
-                    except Exception as e:
-                        st.error(f"Graph Initialization Error: {e}")
+                    asyncio.run(run_graph(
+                        st.session_state.graph,
+                        st.session_state.graph_state,
+                        st.session_state.config,
+                        st.session_state.graph_state
+                    ))
 
     # Display Context and Ingredients
     if st.session_state.graph_state.get("context"):
@@ -102,15 +108,12 @@ def render_ui():
                     {"user_preference": pref}
                 )
                 
-                try:
-                    for event in st.session_state.graph.stream(
-                        None, # Resuming
-                        st.session_state.config
-                    ):
-                        node_name = next(iter(event))
-                        st.session_state.graph_state.update(event[node_name])
-                except Exception as e:
-                    st.error(f"Graph Resumption Error (Suggestions): {e}")
+                asyncio.run(run_graph(
+                    st.session_state.graph,
+                    None, # Resuming
+                    st.session_state.config,
+                    st.session_state.graph_state
+                ))
 
     # Display Suggestions and Recipe Selection
     if st.session_state.graph_state.get("suggestions"):
@@ -129,15 +132,12 @@ def render_ui():
                     {"selected_recipe": chosen_title}
                 )
                 
-                try:
-                    for event in st.session_state.graph.stream(
-                        None, # Resuming
-                        st.session_state.config
-                    ):
-                        node_name = next(iter(event))
-                        st.session_state.graph_state.update(event[node_name])
-                except Exception as e:
-                    st.error(f"Graph Resumption Error (Final): {e}")
+                asyncio.run(run_graph(
+                    st.session_state.graph,
+                    None, # Resuming
+                    st.session_state.config,
+                    st.session_state.graph_state
+                ))
 
     # Final Recipe Display
     if st.session_state.graph_state.get("final_recipe"):
