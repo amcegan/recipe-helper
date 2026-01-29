@@ -6,6 +6,7 @@ from src.schemas import Ingredient, RecipeSuggestionList, FinalRecipe
 from src.logger import get_request_logger, log_retry
 from src.prompts import RECIPE_SUGGESTION_PROMPT, FINAL_RECIPE_PROMPT
 from src.exceptions import AppRecipeError, AppValidationError
+from src.executor import run_cpu_bound
 
 
 class RecipePipeline:
@@ -53,7 +54,7 @@ class RecipePipeline:
             
             # Explicitly validate against Pydantic model else ValidationError
             try:
-                RecipeSuggestionList.model_validate(response.parsed)
+                await run_cpu_bound(RecipeSuggestionList.model_validate, response.parsed)
             except Exception as e:
                 logger.error(f"Validation failed: {str(e)}")
                 raise AppValidationError(f"Invalid recipe suggestion format: {str(e)}") from e
@@ -108,7 +109,7 @@ class RecipePipeline:
             
             # Explicitly validate against Pydantic model
             try:
-                FinalRecipe.model_validate(response.parsed)
+                await run_cpu_bound(FinalRecipe.model_validate, response.parsed)
             except Exception as e:
                 logger.error(f"Validation failed: {str(e)}")
                 raise AppValidationError(f"Invalid final recipe format: {str(e)}") from e

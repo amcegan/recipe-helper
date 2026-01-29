@@ -8,6 +8,7 @@ from src.schemas import IngredientList
 from src.logger import get_request_logger, log_retry
 from src.prompts import INGREDIENT_EXTRACTION_PROMPT
 from src.exceptions import AppVisionError, AppValidationError
+from src.executor import run_cpu_bound
 
 
 class VisionPipeline:
@@ -55,7 +56,7 @@ class VisionPipeline:
 
             # Explicitly validate against Pydantic model else ValidationError
             try:
-                IngredientList.model_validate(response.parsed)
+                await run_cpu_bound(IngredientList.model_validate, response.parsed)
             except Exception as e:
                 logger.error(f"Validation failed: {str(e)}")
                 raise AppValidationError(f"Invalid ingredient data format: {str(e)}") from e

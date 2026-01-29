@@ -8,6 +8,7 @@ from src.recipes import RecipePipeline
 from src.schemas import RecipeState, IngredientList, RecipeSuggestionList, FinalRecipe, WeatherResponse
 from src.logger import get_request_logger
 from src.exceptions import AppVisionError, AppRecipeError, AppValidationError
+from src.executor import run_cpu_bound
 
 # Constants
 WEATHER_API_BASE_URL = "https://wttr.in"
@@ -24,7 +25,7 @@ async def get_weather_context():
             response = await client.get(url, timeout=5.0)
             if response.status_code == 200:
                 # Validate with Pydantic
-                weather_data = WeatherResponse.model_validate(response.json())
+                weather_data = await run_cpu_bound(WeatherResponse.model_validate, response.json())
                 current = weather_data.current_condition[0]
                 temp = current.temp_C
                 desc = current.weatherDesc[0].value.lower()
@@ -63,8 +64,14 @@ async def extract_ingredients_node(state: RecipeState):
     try:
         # Decode bytes to PIL Image
         image_bytes = state['image']
-        with Image.open(io.BytesIO(image_bytes)) as pil_image:
-            ingredients = await vision_pipeline.extract_ingredients(pil_image, state['request_id'])
+        # We need a function to wrap the PIL open + load because Pilot/Image.open is lazy
+        def process_image(b):
+            with Image.open(io.BytesIO(b)) as img:
+                img.load() # Force loading of pixels
+                return img
+
+        pil_image = await run_cpu_bound(process_image, image_bytes)
+        ingredients = await vision_pipeline.extract_ingredients(pil_image, state['request_id'])
         
         # We null out the image to keep the checkpoint size small/serializable
         return {"ingredients": ingredients.ingredients, "image": None}

@@ -5,6 +5,7 @@ from PIL import Image
 from src.vision import VisionPipeline
 from src.recipes import RecipePipeline
 from src.logger import get_request_logger
+from src.executor import run_cpu_bound
 import os
 from dotenv import load_dotenv, find_dotenv
 
@@ -62,9 +63,12 @@ def render_ui():
             
             # Convert PIL Image to bytes for LangGraph serialization
             import io
-            buf = io.BytesIO()
-            image.save(buf, format="PNG")
-            st.session_state.graph_state["image"] = buf.getvalue()
+            def image_to_bytes(img):
+                buf = io.BytesIO()
+                img.save(buf, format="PNG")
+                return buf.getvalue()
+
+            st.session_state.graph_state["image"] = asyncio.run(run_cpu_bound(image_to_bytes, image))
 
             if st.button("Detect Ingredients"):
                 # Reset state for new run
