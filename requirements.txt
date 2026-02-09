@@ -8,3 +8,5 @@ tenacity
 langgraph
 requests
 httpx
+dask
+distributed

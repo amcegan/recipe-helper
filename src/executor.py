@@ -1,18 +1,25 @@
 import asyncio
-from concurrent.futures import ProcessPoolExecutor
 from typing import Callable, Any
-import functools
+from distributed import Client
 
-# Global executor to reuse processes
-# None initialization to allow lazy loading if needed, but we'll init it.
-cpu_executor = ProcessPoolExecutor()
+_dask_client = None
+_client_lock = asyncio.Lock()
+
+async def get_client():
+    global _dask_client
+    async with _client_lock:
+        if _dask_client is None:
+            # Initialize async client
+            _dask_client = await Client(n_workreaers=4, threads_per_worker=1, asynchronous=True)
+        return _dask_client
 
 async def run_cpu_bound(func: Callable, *args, **kwargs) -> Any:
     """
-    Runs a CPU-bound function in a separate process pool.
+    Runs a CPU-bound function using Dask.
     Usage: result = await run_cpu_bound(my_cpu_heavy_func, arg1, kwarg=val)
     """
-    loop = asyncio.get_running_loop()
-    # functools.partial is used because loop.run_in_executor doesn't support kwargs
-    pfunc = functools.partial(func, *args, **kwargs)
-    return await loop.run_in_executor(cpu_executor, pfunc)
+    client = await get_client()
+    # Submit the task to Dask
+    future = client.submit(func, *args, **kwargs)
+    # Await the result
+    return await future
