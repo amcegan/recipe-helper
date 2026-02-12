@@ -10,7 +10,7 @@ from langgraph.graph import StateGraph, START, END
 from src.vision import VisionPipeline
 from src.recipes import RecipePipeline
 from src.schemas import RecipeState, IngredientList, RecipeSuggestionList, FinalRecipe, WeatherResponse
-from src.logger import get_request_logger
+from src.logger import get_request_logger, log_entry_exit
 from src.exceptions import AppVisionError, AppRecipeError, AppValidationError
 from src.executor import run_cpu_bound
 from src.security import safe_error_message
@@ -18,6 +18,7 @@ from src.security import safe_error_message
 # Constants
 WEATHER_API_BASE_URL = "https://wttr.in"
 
+@log_entry_exit
 async def get_weather_context():
     """
     Fetches weather context from wttr.in and current Dublin time.
@@ -79,7 +80,7 @@ async def extract_ingredients_node(state: RecipeState):
         dict: A dictionary containing the extracted ingredients or an error message.
     """
     logger = get_request_logger(state['request_id'])
-    logger.debug(f"ENTERING Node: extract_ingredients - Image type: {type(state.get('image'))}")
+    logger.debug("Processing extraction node", image_type=str(type(state.get('image'))))
     
     if not state.get('image'):
         return {"error": "No image provided for ingredient extraction"}
@@ -115,7 +116,7 @@ async def check_weather_node(state: RecipeState):
         dict: A dictionary containing the weather context string.
     """
     logger = get_request_logger(state['request_id'])
-    logger.debug("ENTERING Node: check_weather")
+    logger.debug("Processing weather node")
     context = await get_weather_context()
     return {"context": context}
 
@@ -131,7 +132,7 @@ async def suggest_recipes_node(state: RecipeState):
         dict: A dictionary containing the list of recipe suggestions or an error message.
     """
     logger = get_request_logger(state['request_id'])
-    logger.debug("ENTERING Node: suggest_recipes")
+    logger.debug("Processing suggestions node")
     
     api_key = settings.gemini_api_key
     recipe_pipeline = RecipePipeline(api_key)
@@ -174,7 +175,7 @@ async def generate_final_recipe_node(state: RecipeState):
         dict: A dictionary containing the final recipe object or an error message.
     """
     logger = get_request_logger(state['request_id'])
-    logger.debug("ENTERING Node: generate_final_recipe")
+    logger.debug("Processing final recipe node")
     
     api_key = settings.gemini_api_key
     recipe_pipeline = RecipePipeline(api_key)

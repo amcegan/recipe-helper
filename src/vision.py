@@ -9,7 +9,7 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 from PIL import Image
 from typing import List
 from src.schemas import IngredientList
-from src.logger import get_request_logger, log_retry
+from src.logger import get_request_logger, log_retry, log_entry_exit
 from src.prompts import INGREDIENT_EXTRACTION_PROMPT
 from src.exceptions import AppVisionError, AppValidationError
 from src.executor import run_cpu_bound
@@ -31,6 +31,7 @@ class VisionPipeline:
         self.confidence_threshold = settings.ingredient_confidence_threshold
 
     
+    @log_entry_exit
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
@@ -54,7 +55,6 @@ class VisionPipeline:
             AppValidationError: If the returned data does not match the expected schema.
         """
         logger = get_request_logger(request_id)
-        logger.debug(f"ENTERING: extract_ingredients with request_id={request_id}")
         logger.info("Starting ingredient extraction from image")
 
         try:
@@ -97,8 +97,7 @@ class VisionPipeline:
             if filtered_count < original_count:
                 logger.info(f"Filtered out {original_count - filtered_count} ingredients below {self.confidence_threshold} confidence")
 
-            logger.info(f"Successfully extracted {filtered_count} ingredients")
-            logger.debug(f"EXITING: extract_ingredients")
+            logger.info("Successfully extracted ingredients", count=filtered_count)
             return response.parsed
         except Exception as e:
             logger.error(f"Error during extraction: {str(e)}")

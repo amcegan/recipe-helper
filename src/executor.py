@@ -4,8 +4,9 @@ Provides a thread-safe singleton client for handling CPU-bound tasks in a Stream
 """
 import asyncio
 import threading
-from typing import Callable, Any
+from typing import Callable, Any, Optional
 from distributed import Client
+from src.logger import log_entry_exit
 
 _dask_client = None
 _client_lock = threading.Lock()
@@ -27,6 +28,7 @@ def get_client():
             _dask_client = Client(n_workers=4, threads_per_worker=1, asynchronous=False)
         return _dask_client
 
+@log_entry_exit
 async def run_cpu_bound(func: Callable, *args, **kwargs) -> Any:
     """
     Runs a CPU-bound function using Dask.

@@ -8,7 +8,7 @@ import asyncio
 from PIL import Image
 from src.vision import VisionPipeline
 from src.recipes import RecipePipeline
-from src.logger import get_request_logger
+from src.logger import get_request_logger, setup_logger, log_entry_exit
 from src.executor import run_cpu_bound
 from src.config import settings
 from src.graph import create_recipe_graph
@@ -48,6 +48,7 @@ async def run_graph(graph, inputs, config, state_ref):
     except Exception as e:
         st.error(f"Graph Error: {safe_error_message(e)}")
 
+@log_entry_exit
 def render_ui():
     """
     Main function to render the Streamlit UI.
@@ -186,4 +187,4 @@ def render_ui():
             st.subheader("Chef's Notes")
             st.write(recipe.notes)
     
-    logger.debug("EXITING: render_ui")
+

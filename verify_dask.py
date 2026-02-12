@@ -8,14 +8,24 @@ sys.path.append(os.getcwd())
 
 from src.executor import run_cpu_bound
 
+from src.executor import run_cpu_bound
+from src.logger import setup_logger, get_request_logger, log_entry_exit
+
+# Initialize the centralized logger
+setup_logger()
+
 def cpu_heavy_task(name, duration):
-    print(f"Starting task {name} for {duration}s...")
+    logger = get_request_logger()
+    logger.info(f"Starting task {name}", task_name=name, duration=duration)
     time.sleep(duration)
-    print(f"Finished task {name}.")
+    logger.info(f"Finished task {name}", task_name=name)
     return f"Result of {name}"
 
+@log_entry_exit
 async def main():
-    print("Starting Dask verification...")
+    logger = get_request_logger()
+    logger.info("Starting Dask verification")
+    
     # Run multiple tasks in parallel
     tasks = [
         run_cpu_bound(cpu_heavy_task, "Task A", 2),
@@ -27,14 +37,13 @@ async def main():
     results = await asyncio.gather(*tasks)
     end_time = time.perf_counter()
     
-    print(f"Results: {results}")
     duration = end_time - start_time
-    print(f"Total time taken: {duration:.2f} seconds")
+    logger.info("Dask verification completed", results=results, total_duration=round(duration, 2))
     
     if duration < 5: # If they ran in parallel, it should be ~2-3s
-        print("Verification SUCCESS: Tasks ran in parallel.")
+        logger.info("Verification SUCCESS: Tasks ran in parallel.")
     else:
-        print("Verification FAILURE: Tasks seem to have run sequentially or startup took too long.")
+        logger.error("Verification FAILURE: Tasks seem to have run sequentially or startup took too long.")
 
 if __name__ == "__main__":
     try:
@@ -42,4 +51,5 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         pass
     except Exception as e:
-        print(f"An error occurred: {e}")
+        logger = get_request_logger()
+        logger.exception("An unexpected error occurred during verification", error=str(e))

@@ -6,7 +6,7 @@ from google.genai import types
 from tenacity import retry, stop_after_attempt, wait_exponential
 from typing import List, Optional
 from src.schemas import Ingredient, RecipeSuggestionList, FinalRecipe
-from src.logger import get_request_logger, log_retry
+from src.logger import get_request_logger, log_retry, log_entry_exit
 from src.prompts import RECIPE_SUGGESTION_PROMPT, FINAL_RECIPE_PROMPT
 from src.exceptions import AppRecipeError, AppValidationError
 from src.executor import run_cpu_bound
@@ -26,6 +26,7 @@ class RecipePipeline:
         self.client = genai.Client(api_key=api_key)
         self.model_id = "gemini-2.0-flash"
 
+    @log_entry_exit
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
@@ -50,8 +51,7 @@ class RecipePipeline:
             AppValidationError: If the returned data does not match the expected schema.
         """
         logger = get_request_logger(request_id)
-        logger.debug(f"ENTERING: suggest_recipes with request_id={request_id}, preference={preference}")
-        logger.info(f"Generating recipe suggestions with preference: {preference}")
+        logger.info("Generating recipe suggestions", preference=preference)
 
         ingredient_names = ", ".join([ing.name for ing in ingredients])
         prompt = RECIPE_SUGGESTION_PROMPT.format(
@@ -87,7 +87,6 @@ class RecipePipeline:
                 logger.error(f"Validation failed: {str(e)}")
                 raise AppValidationError(f"Invalid recipe suggestion format: {str(e)}") from e
             
-            logger.debug(f"EXITING: suggest_recipes with {len(response.parsed.suggestions)} suggestions")
             return response.parsed
         except Exception as e:
             logger.error(f"Error suggesting recipes: {str(e)}")
@@ -95,6 +94,7 @@ class RecipePipeline:
                 raise e
             raise AppRecipeError(f"Unexpected error in Recipe Pipeline (suggestions): {str(e)}") from e
 
+    @log_entry_exit
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
@@ -120,8 +120,7 @@ class RecipePipeline:
             AppValidationError: If the returned data does not match the expected schema.
         """
         logger = get_request_logger(request_id)
-        logger.debug(f"ENTERING: generate_final_recipe for {suggestion_title}, request_id={request_id}")
-        logger.info(f"Generating final recipe for: {suggestion_title}")
+        logger.info("Generating final recipe", recipe_title=suggestion_title)
 
         ingredient_names = ", ".join([ing.name for ing in ingredients])
         prompt = FINAL_RECIPE_PROMPT.format(
@@ -159,7 +158,6 @@ class RecipePipeline:
                 logger.error(f"Validation failed: {str(e)}")
                 raise AppValidationError(f"Invalid final recipe format: {str(e)}") from e
             
-            logger.debug(f"EXITING: generate_final_recipe for {response.parsed.title}")
             return response.parsed
         except Exception as e:
             logger.error(f"Error generating final recipe: {str(e)}")
