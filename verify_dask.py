@@ -1,3 +1,11 @@
+"""
+Verification script for Dask parallel execution.
+
+This script runs a set of CPU-bound tasks in parallel using the Dask executor
+to verify that the parallel processing infrastructure is correctly configured
+and performing as expected.
+"""
+
 import asyncio
 import time
 import os
@@ -7,14 +15,22 @@ import sys
 sys.path.append(os.getcwd())
 
 from src.executor import run_cpu_bound
-
-from src.executor import run_cpu_bound
 from src.logger import setup_logger, get_request_logger, log_entry_exit
 
 # Initialize the centralized logger
 setup_logger()
 
-def cpu_heavy_task(name, duration):
+def cpu_heavy_task(name: str, duration: int) -> str:
+    """
+    Simulates a CPU-heavy task by sleeping for a specified duration.
+
+    Args:
+        name: The name of the task for logging purposes.
+        duration: The number of seconds to sleep.
+
+    Returns:
+        A result string indicating completion.
+    """
     logger = get_request_logger()
     logger.info(f"Starting task {name}", task_name=name, duration=duration)
     time.sleep(duration)
@@ -22,7 +38,14 @@ def cpu_heavy_task(name, duration):
     return f"Result of {name}"
 
 @log_entry_exit
-async def main():
+async def main() -> None:
+    """
+    Orchestrates the verification of parallel task execution.
+
+    Runs multiple CPU-bound tasks in parallel and measures the total elapsed time.
+    If the total time is significantly less than the sum of task durations,
+    parallelization is considered successful.
+    """
     logger = get_request_logger()
     logger.info("Starting Dask verification")
     

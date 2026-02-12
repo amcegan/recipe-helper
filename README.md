@@ -171,6 +171,17 @@ pytest tests/
 
 The project uses frozen dependencies in `requirements.txt` to ensure consistent behavior across all developer workstations.
 
+## Parallel Execution Verification
+
+The project includes a utility script, `verify_dask.py`, to benchmark and verify that the parallel processing infrastructure (Dask) is correctly configured.
+
+To run the verification:
+```bash
+PYTHONPATH=. python3 verify_dask.py
+```
+
+This script simulates multiple CPU-bound tasks. If the total duration is significantly less than the sum of individual task times (e.g., ~2.5s for three 2s tasks), the verification is successful.
+
 ## Technology Choices
 
 | Technology | Role | Rationale |
