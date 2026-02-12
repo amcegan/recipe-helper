@@ -1,75 +1,54 @@
-# Project Creation Prompt: Recipe Helper
+# Project Creation Prompt: Recipe Helper (LangGraph Edition)
 
-You are building a modular, production-ready Python application that recommends recipes based on photos of ingredients. The objective is to demonstrate professional software engineering standards, including separation of concerns, strict data validation, robust error handling, and comprehensive documentation for both humans and AI agents.
+You are building a modular, production-ready Python application that recommends recipes based on photos of ingredients. This application uses **LangGraph** for orchestration and integrates real-time weather context to personalize suggestions.
 
 ## High-Level Requirements
 
 1. **Streamlit User Interface**
-    *   **Single-Column Layout**: A clean, modern interface for mobile and desktop.
-    *   **Flow**: Upload image → Detect ingredients (with confidence scores) → Select recipe suggestion → Generate final detailed recipe.
-    *   **Resource Safety**: Use context managers (`with PIL.Image.open(...)`) for all image/file handling to prevent memory leaks.
+    - **Stage 1 (Detect)**: Upload image and trigger ingredient/weather detection.
+    - **Stage 2 (Suggest)**: Review ingredients, input optional dietary/style preferences, and trigger recipe suggestions.
+    - **Stage 3 (Finalize)**: Select a suggestion and generate the full recipe with cooking instructions.
+    - **Resource Safety**: Always use context managers for media and file I/O. Convert images to `bytes` for LangGraph serialization.
 
-2. **Vision Pipeline (Gemini API)**
-    *   **Model**: Use `gemini-2.0-flash` for multi-modal analysis.
-    *   **Thresholding**: Implement `INGREDIENT_CONFIDENCE_THRESHOLD` (env variable, default 0.5) to filter out low-certainty detections.
-    *   **Structured Output**: Leverage Gemini's native JSON mode with Pydantic schemas.
+2. **Orchestration (LangGraph)**
+    - Implement a `StateGraph` with nodes for extraction, weather context, recipe suggestion, and final generation.
+    - Use `interrupt_before` to pause for user input (preferences and selection).
+    - Use `MemorySaver` for in-memory persistence of the orchestration state.
 
-3. **Recipe Generation Pipeline**
-    *   **Flow**: Multi-step generation (Suggestions → Final Recipe).
-    *   **Context**: Ensure preferences (e.g., "vegetarian", "spicy") are strictly adhered to.
-    *   **Safety**: Prohibit harmful suggestions (e.g., unknown mushrooms) and unrequested cooking methods (e.g., naked-flame barbecues).
+3. **Vision Pipeline (Gemini API)**
+    - Use `gemini-2.0-flash` to extract structured ingredient lists from images.
+    - Implement confidence filtering via `INGREDIENT_CONFIDENCE_THRESHOLD`.
 
-4. **Modular Architecture**
-    *   **Modules**: `vision.py`, `recipes.py`, `ui.py`, `schemas.py`, `validators.py`, `exceptions.py`.
-    *   **Library Design**: Components in `src/` must be decoupled from UI logic for reusability.
-    *   **Exceptions**: Use a domain-specific exception hierarchy (e.g., `AppVisionError`, `AppValidationError`).
+4. **Weather Context Service**
+    - Fetch current weather from `wttr.in` based on a `LOCATION_CITY` env variable.
+    - Use Pydantic models to validate the nested JSON response from the API.
+    - Combine weather and local Dublin time into a context string for prompting.
 
-5. **Validation & Reliability**
-    *   **Pydantic**: Enforce strict validation on all AI outputs immediately after parsing using `Model.model_validate()`.
-    *   **Retries**: Decorate all service methods with `tenacity` retries (exponential backoff).
-    *   **Logging**: Implement a specialized logger that injects a unique `request_id` into every log message for session traceability.
+5. **Recipe Generation**
+    - Use Gemini to suggest 3-5 recipes based on ingredients, user preferences, and situational context.
+    - Generate a high-quality final recipe with title, ingredients, steps, and chef's notes.
 
-## Prompting Strategy & Guardrails
+## Core Modules & Responsibilities
 
-### Ingredient Extraction
-*   **Role**: "You are an expert ingredient-extraction engine."
-*   **Return**: JSON object mapping to `IngredientList` schema (name, confidence, notes).
-*   **Rules**: No speculation—label uncertain items as "unknown". No inferred items or brands. Culinary context only.
-
-### Recipe Suggestions
-*   **Role**: "You are a professional chef and nutritionist."
-*   **Return**: JSON object mapping to `RecipeSuggestionList` schema.
-*   **Rules**: Clearly distinguish between available and missing ingredients. Explain rationale. professional and child-friendly language.
-
-## Antigravity Configuration (AI Agents)
-
-- **Instruction Discovery**: Store AI-specific project guidelines in `.agent/agents.md`.
-- **Rules & Workflows**:
-    - Maintain `.agent/rules/python-standards.md` for style and modularity enforcement.
-    - Define a `generate-unit-tests` workflow in `.agent/workflows/`.
-- **Documentation Map**: Maintain a table in `README.md` mapping all `.md` files to their audience and purpose.
-- **Naming Convention**: Use **kebab-case** for all project documentation and configuration files (e.g., `project-prompt.md`, `python-standards.md`).
-
-## Security & Privacy
-
-- **Secret Management**: Use `.env.example` as a template; never commit hardcoded keys. Provide explicit guidance for Production Secret Management (GitHub Actions, AWS, or Google).
-- **Confinement**: Restrict file I/O strictly to the project workspace.
-- **API Security**: Set `max_output_tokens`, `temperature`, and `safety_settings` for all model interactions to ensure cost control and safety.
-
-## Development Workflow
-
-1.  **Plan**: Present module outlines and schemas for approval before coding.
-2.  **Scaffold**: Generate code skeletons following PEP 8 and explicit type hints.
-3.  **Implement**: Build core pipelines with retries, request-ID logging, and strict validation.
-4.  **Test**: Comprehensive unit testing with `pytest`, mocking all external Gemini API calls.
-5.  **Document**: Deliver final guides in `README.md` and `.agent/agents.md`.
+- **`src/graph.py`**: The heart of the application. Defines the graph nodes, state schema, and compiles the workflow with appropriate interrupts.
+- **`src/vision.py`**: Encapsulates all vision-related logic and Gemini Vision API interactions.
+- **`src/recipes.py`**: Handles text-based Gemini calls for recipe suggestions and final recipe expansion.
+- **`src/schemas.py`**: Central repository for all Pydantic models (Ingredients, Recipes, Weather) and the `RecipeState` TypedDict.
+- **`src/prompts.py`**: Centralized module for all LLM prompts, ensuring separation of content and logic.
+- **`src/logger.py`**: Structured logging with session-based `request_id` tracking.
+- **`src/exceptions.py`**: Domain-specific error types for predictable failure handling.
+- **`src/ui.py`**: The Streamlit interface that drives the graph execution and manages state persistence across user sessions.
 
 ## Development Guidelines
 
-- **Clean Code**: Use well-named variables and functions that clearly convey intent.
-- **Modularity**: Externalize all LLM prompts to a dedicated `prompts.py` module.
-- **Resilience**: Implement `tenacity` retries for all service calls. Ensure the logger captures specific error codes (e.g., 429, 503) during retry attempts.
-- **Resource Management**: Always use context managers (`with` statements) to ensure resources like files and images are properly closed.
-- **Model Configuration**: Explicitly set token limits, temperature, and safety settings for every model call.
-- **Integrity**: Verify that all response elements are valid against Pydantic models immediately upon receipt.
-- **Interface Design**: Use a domain-specific exception hierarchy (e.g., `src/exceptions.py`) so that others can reuse portions of the codebase with confidence in its correctness and reliability.
+- **Validation First**: Every external API response (Gemini, Weather) must be validated immediately against a Pydantic model.
+- **Resilience**: Use `tenacity` for exponential backoff on all network calls.
+- **State Integrity**: Do not store non-serializable objects (like PIL Images) in the LangGraph state; convert to bytes and clear after use.
+- **Separation of Concerns**: Keep business logic in `src/` and presentation logic in `ui.py`.
+- **Modularity**: Prompts should be templated and accept `ingredients`, `context`, and `preference` as variables.
+
+## Security & Secrets
+
+- Load all configuration from a `.env` file using `python-dotenv`.
+- Template variable: `GEMINI_API_KEY`, `LOCATION_CITY`, `LOG_LEVEL`, `INGREDIENT_CONFIDENCE_THRESHOLD`.
+- Never commit the `.env` file to version control.

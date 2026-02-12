@@ -1,4 +1,4 @@
-# agents.md - AI Agent Conventions
+# Agents.md - AI Agent Conventions
 
 This file provides specific instructions and conventions for AI assistants (like Google AntiGravity) working on the **Recipe Helper** project. Follow these guidelines to ensure consistency and reliability.
 

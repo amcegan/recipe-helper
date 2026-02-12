@@ -1,146 +1,202 @@
-# Recipe Helper – AI‑Powered Recipe Recommendation System
-This project was created using Google's AntiGravity AI agent. An agents.md file can be found in the .agent directory.
-The full project prompt can be found in [project-prompt.md](project-prompt.md).
+# Recipe Helper – AI‑Powered Recipe Recommendation System (LangGraph Edition)
 
-Recipe Helper is an AI-powered culinary companion that transforms photos of your ingredients into delicious recipes.
+Recipe Helper is an AI‑powered culinary companion that turns photos of your pantry into delicious meal ideas. After implementing the core GenAI pipeline in Part A, this refactored version introduces **LangGraph** orchestration and **situational context** (weather and time) to satisfy the Part B learning challenge from the technical assessment. The application now executes as a stateful graph with human‑in‑the‑loop pauses and enriches model prompts with live weather data and the current time in Dublin.
 
 It demonstrates an end‑to‑end workflow using a vision‑capable large language model to extract ingredients from an image, reason about how the ingredients fit together, and synthesize an easy‑to‑follow recipe tailored to the user's preferences. The project emphasizes safety, reliability and clear separation of concerns so that the core services can be reused as a library or extended for future work.
 
-## Project Documentation
+## Documentation Map
 
 | File | Audience | Purpose |
-| :--- | :--- | :--- |
-| **[README.md](README.md)** | Users / Devs | Primary project overview, setup, and execution guide. |
-| **[project-prompt.md](project-prompt.md)**| Devs | Comprehensive blueprint for recreating this project from scratch. |
-| **[.agent/agents.md](.agent/agents.md)** | AI Assistants | Agent Context, architectural constraints, safety standards, and coding conventions for AI. |
-| **[.agent/rules/python-standards.md](.agent/rules/python-standards.md)** | Devs / AI | Specific coding standards and best practices for Python. |
-| **[.agent/workflows/generate-unit-tests.md](.agent/workflows/generate-unit-tests.md)** | Devs / AI |  Generate/Run unit tests for the project. |
+| :---- | :---- | :---- |
+| **README.md (this file)** | Users / Developers | Project overview, setup, running instructions, architectural design and trade‑offs, and limitations. |
+| **project‑prompt.md** | Developers | Blueprint for recreating this version of the project from scratch, including high‑level requirements, module responsibilities and development guidelines. |
+| **learning.md** | Team / Reviewers | Reflection on the Part B learning challenge: resources consulted, challenges encountered, and insights gained from using LangGraph and integrating external data. |
+| **.agent/agents.md** | AI Agents | Context and constraints for AI code generation, including safety, coding standards and agent workflows. |
+| **.agent/rules/python‑standards.md** | Developers / AI Agents | Detailed Python coding standards used throughout the project. |
 
-## Project Overview
+## What’s New in the LangGraph Edition
 
-At a high level the application operates in three stages:
+This iteration extends the original recipe helper to explore a new GenAI framework and tool integration. The key changes are:
 
-1. **Ingredient extraction** – A multi‑modal model (gemini‑2.0‑flash) analyzes the uploaded image and returns a structured list of ingredients with confidence scores. Validation via Pydantic models ensures that the AI output conforms to the expected schema and that low‑confidence detections can be filtered out using an environment variable.
+1. **Ingredient extraction** – A multi‑modal model (gemini‑2.0‑flash) analyzes the uploaded image and returns a structured list of ingredients with confidence scores. Validation via Pydantic models ensures that the AI output conforms to the expected schema.
+* **Agent‑style orchestration with LangGraph:** The core workflow has been refactored into a **five‑node state machine** implemented in src/graph.py. The nodes execute in sequence and pause to allow user input.
 
-2. **Recipe suggestion** – Given the extracted ingredients and an optional natural‑language user preference (for example, “quick vegetarian lunch”), a text model suggests 3–5 recipe ideas. Each suggestion contains a title, diet tags, required/missing ingredients, estimated prep time, and a rationale explaining why the recipe matches the preference.
+  1\) **Extract ingredients** decodes image bytes, calls the vision model and clears the image from state to reduce checkpoint size[\[1\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/graph.py#:~:text=def%20extract_ingredients_node,Image%20type%3A%20%7Btype%28state.get%28%27image).  
 
-3. **Final recipe generation** – After the user selects one of the suggestions, the model produces a detailed step‑by‑step recipe that includes ingredients, instructions, cooking time and any chef’s notes. This final step again validates the AI output against a strict schema to prevent hallucinated or malformed responses.
+  2\) **Check weather** retrieves a city‑based forecast from *wttr.in*, validates it via a Pydantic model and formats a concise context string including the current Dublin time[\[2\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/graph.py#:~:text=def%20get_weather_context%28%29%3A%20,Dublin). 
 
-Throughout the workflow the application uses a unique request\_id and consistent logging to trace operations. Retries via the tenacity library wrap all external API calls to recover gracefully from transient network errors or empty model responses.
+  3\) **Suggest recipes** invokes RecipePipeline.suggest\_recipes() with the detected ingredients, the user’s preference and the weather/time context[\[3\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/graph.py#:~:text=def%20check_weather_node,context).   
+
+  4\) **Human review** pauses execution so the user can choose one of the suggested recipes. 
+
+  5\) **Generate final recipe** calls generate\_final\_recipe() with the selected title and context[\[4\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/graph.py#:~:text=def%20create_recipe_graph).
+  
+
+* **Situational awareness:** Prompts are now enriched with situational context. The get\_weather\_context() function fetches the current temperature and weather description for a configurable city (default “Dublin”) and combines it with the local time[\[2\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/graph.py#:~:text=def%20get_weather_context%28%29%3A%20,Dublin). This string is passed through the graph and into the recipe prompts so that the model can tailor its suggestions to cold rainy evenings or sunny afternoons.
+
+* **Three‑stage Streamlit UI:** The user interface in src/ui.py has been updated to mirror the graph stages. After uploading an image and clicking **Detect Ingredients**, the app shows both the weather/time context and the list of detected ingredients. The user can then enter a preference and click **Generate Recipe Suggestions**, which resumes the graph at the “suggest\_recipes” node. Finally, selecting a suggestion from the drop‑down and clicking **Get Final Recipe** resumes the graph to produce the detailed recipe[\[5\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/ui.py#:~:text=,%2A%2AContext%3A%2A%2A%20%7Bst.session_state.graph_state%5B%27context).
+
+* **Image and state handling:** Images are converted to bytes before being stored in the graph state to ensure compatibility with the MemorySaver checkpoint system. After ingredient extraction, the image is set to None to minimise the size of checkpointed state[\[1\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/graph.py#:~:text=def%20extract_ingredients_node,Image%20type%3A%20%7Btype%28state.get%28%27image). Additional fields in the RecipeState TypedDict track context, suggestions, user preference and the final recipe[\[6\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/schemas.py#:~:text=class%20RecipeState%28TypedDict%29%3A%20,FinalRecipe%5D%20request_id%3A%20str).
+
+* **Expanded schemas and validation:** The WeatherResponse, CurrentCondition and WeatherDesc Pydantic models have been added to src/schemas.py to validate the weather API response before use[\[7\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/schemas.py#:~:text=class%20WeatherDesc). The recipe pipeline methods now accept a context parameter and include it in the prompts[\[8\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/recipes.py#:~:text=def%20suggest_recipes%28self%2C%20ingredients%3A%20List,preference).
+
+* **New environment variables:**
+
+* LOCATION\_CITY – optional; defaults to “Dublin”. Determines which city to query from wttr.in.
+
+* GEMINI\_API\_KEY, LOG\_LEVEL and INGREDIENT\_CONFIDENCE\_THRESHOLD from the original version are still used.
+
+* **Additional dependencies:** The refactor introduces langgraph and requests. See requirements.txt for exact versions.
+
+## Workflow Orchestration
+
+The application follows a three-stage orchestrated flow with two state-managed interrupts (if the following diagram does not display please install the Markdown Preview Mermaid Support extension for VSCode):
+
+```mermaid
+graph TD
+    START((Start)) --> EXTRACT[Extract Ingredients]
+    EXTRACT --> WEATHER[Check Weather & Time]
+    WEATHER --> INT1{{"<b>Interrupt</b><br/>User reviews ingredients<br/>& enters preference"}}
+    INT1 --> SUGGEST[Suggest Recipes]
+    SUGGEST --> INT2{{"<b>Interrupt</b><br/>User selects recipe"}}
+    INT2 --> FINAL[Generate Final Recipe]
+    FINAL --> END((End))
+
+```
 
 ## Architectural Design & Decisions
 
-The project is organized as a small library with a thin Streamlit user interface. This separation makes it easy to test and reuse the business logic without depending on the UI framework.
+The system remains modular, with clear separation between the service layer and the UI, but the control flow is now managed by LangGraph. A StateGraph is compiled with MemorySaver to persist state between pauses. Each node encapsulates a single responsibility:
 
-* **Modular services and components:**
+1. **extract\_ingredients\_node** – decodes image bytes, calls the vision model and returns a list of Ingredient objects. It nulls out the image in the returned state to reduce checkpoint size[\[1\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/graph.py#:~:text=def%20extract_ingredients_node,Image%20type%3A%20%7Btype%28state.get%28%27image).
 
   * **src/vision.py** encapsulates all image handling and calls to the Gemini vision API. It accepts a PIL Image, constructs a prompt, and returns an IngredientList Pydantic model after filtering by confidence.
+2. **check\_weather\_node** – calls get\_weather\_context() to fetch a concise weather/time string and returns it as context[\[2\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/graph.py#:~:text=def%20get_weather_context%28%29%3A%20,Dublin).
 
-  * **src/recipes.py** contains the recipe pipeline. It exposes two methods – **suggest\_recipes()** for high‑level suggestions and **generate\_final\_recipe()** for the full recipe – both of which enforce schema validation and implement exponential backoff retries.
+3. **suggest\_recipes\_node** – instantiates RecipePipeline and calls suggest\_recipes() with ingredients, the user’s preference and the context[\[3\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/graph.py#:~:text=def%20check_weather_node,context).
 
   * **src/prompts.py** centralizes all prompts. Having the text in one place ensures consistent prompt engineering.
+4. **human\_review\_node** – intentionally does nothing except pause the graph; Streamlit resumes it when the user has selected a recipe.
 
-  * **src/schemas.py** defines strong Pydantic models for ingredients, suggestions and final recipes. These models provide type safety, allow downstream code to reason about AI output, and support response\_schema integration with the Gemini API.
+5. **generate\_final\_recipe\_node** – calls RecipePipeline.generate\_final\_recipe() with the selected suggestion title, ingredients, user preference and context[\[4\]](https://raw.githubusercontent.com/amcegan/recipe-helper/main/src/graph.py#:~:text=def%20create_recipe_graph).
 
-  * src/validators.py offers generic JSON cleaning/validation and a reusable retry wrapper for calls that may intermittently return invalid JSON. The retry logic is separate from tenacity to allow explicit recovery from schema‑related issues.
-
-  * src/logger.py sets up a structured logger and exposes get\_request\_logger() and log\_retry() so that every log line includes a request identifier. This aids debugging when multiple users are interacting concurrently.
-
-  * src/exceptions.py defines a clear exception hierarchy (AppVisionError, AppRecipeError, AppValidationError) which surfaces meaningful error messages to the caller without leaking implementation details.
-
-* **Streamlit front‑end:** The src/ui.py module implements the user interface. It uses Streamlit to render a three‑stage experience: uploading an image, reviewing detected ingredients, and generating recipes. The UI stores intermediate results (ingredients, suggestions, final\_recipe) in st.session\_state and passes the user’s textual preference from a st.text\_input() field to the recipe pipeline. Errors are handled gracefully via status messages, and each stage can be retried without refreshing the page.
-
-* **Configuration via environment:** Sensitive data such as the Gemini API key are loaded from a .env file using python‑dotenv. Optional settings (LOG\_LEVEL, INGREDIENT\_CONFIDENCE\_THRESHOLD) allow you to tune logging verbosity and filter out low‑confidence ingredients without changing the source code.
-
-* **Testing:** The tests/ folder contains unit tests for the vision and recipe pipelines and for the generic validators. Tests use pytest and unittest.mock to mock out external API calls so that they can run offline. The tests demonstrate success paths, error handling and retry behaviour.
+  * **src/validators.py** offers generic JSON cleaning/validation and a reusable retry wrapper for calls that may intermittently return invalid JSON.
+  * **src/logger.py** sets up a structured logger and exposes get\_request\_logger() and log\_retry() so that every log line includes a request identifier.
+  * **src/exceptions.py** defines a clear exception hierarchy (AppVisionError, AppRecipeError, AppValidationError).
+  * **Streamlit front‑end:** The src/ui.py module implements the user interface. It uses Streamlit to render a three‑stage experience.
+  * **Configuration via environment:** Sensitive data such as the Gemini API key are loaded from a .env file.
+  * **Testing:** The tests/ folder contains unit tests for the vision and recipe pipelines.
 
 ### Trade‑offs and Rationale
 
-* **Gemini vs. other models:** Google’s gemini‑2.0‑flash was chosen because it offers integrated multi‑modal support and native structured JSON output via the response\_schema parameter. This reduces prompt engineering overhead and simplifies validation compared with raw text‑only models.
+* **Gemini vs. other models:** Google’s gemini‑2.0‑flash was chosen for native structured JSON output.
+* **Streamlit UI:** Rapid building of interactive Python apps.
+* **Schema enforcement with Pydantic:** Preventing downstream crashes.
+* **Retries and logging:** Resilience against transient API failures.
 
-* **Streamlit UI:** Streamlit provides a rapid way to build interactive web apps with minimal boilerplate. It is not production‑optimized but suits the goal of demonstrating the core GenAI workflow. By keeping the UI thin, it’s straightforward to replace with a CLI or REST API if needed.
-
-* **Schema enforcement with Pydantic:** Validating AI responses against Pydantic models prevents downstream crashes and surfaces issues early. It also allows us to use response\_schema on the Gemini client, which requests the model to emit JSON conforming to our schema. This approach mitigates hallucination and ensures contract‑driven development.
-
-* **Retries and logging:** Transient API failures are common when calling large models. Using tenacity with exponential backoff and a retry limit provides resilience while preventing infinite loops. Including the request\_id in logs enables correlation across services and is a pattern adopted in many production systems.
+Pausing before the suggestion and review nodes allows the UI to collect user input (preference and chosen recipe).
 
 ## Setup Instructions
 
 ### Prerequisites
 
-1. **Python 3.9+**
-2. **Google Gemini API Key**
+1. **Python 3.9+**
 
-### Setup
+2. **Google Gemini API Key** – sign up via Google AI Studio.
+
+### Installation
 
 1. **Create and activate a virtual environment** (recommended):
 
-   python3 \-m venv venv  
-   source venv/bin/activate  \# or \`venv\\Scripts\\activate\` on Windows
+python3 \-m venv venv  
+source venv/bin/activate  \# or \`venv\\Scripts\\activate\` on Windows
 
-2. **Install dependencies**:
+1. **Install dependencies**:
 
-   pip install \--upgrade pip  
-   pip install \-r requirements.txt
+pip install \--upgrade pip  
+pip install \-r requirements.txt
 
-3. **Configure environment variables**:
+1. **Configure environment variables**:
 
-   Copy .env.example to .env and set the following keys:
+Copy .env.example to .env and set the following keys:
 
-   * GEMINI\_API\_KEY: your Google Gemini API key. You can obtain one from [Google AI Studio](https://aistudio.google.com/).
+* **GEMINI\_API\_KEY** – your Google Gemini API key.
 
-   * LOG\_LEVEL (optional): set to DEBUG for verbose logs or INFO for typical output.
+* **LOCATION\_CITY** (optional) – city for wttr.in weather look‑ups (default: Dublin).
 
-   * INGREDIENT\_CONFIDENCE\_THRESHOLD (optional): float between 0.0 and 1.0 to filter low‑confidence detections. Default is 0.5.
+* **LOG\_LEVEL** (optional) – DEBUG for verbose logs or INFO for typical output.
 
-The application reads these values at runtime using python‑dotenv. **Never commit your API key to version control.**
+* **INGREDIENT\_CONFIDENCE\_THRESHOLD** (optional) – float between 0.0 and 1.0 to filter low‑confidence ingredient detections.
+
+Never commit your API keys to version control. The application uses python‑dotenv to load these values at runtime.
 
 ## Running the Application
 
-Start the Streamlit server from the project root:
+Run the Streamlit server from the project root:
 
 streamlit run main.py
 
-If it doesn't open automatically, wait for the local URL (usually `http://localhost:8501`) to appear and open it in your browser.
- The flow is:
+The flow is:
 
-1. Upload an image of your ingredients (supported formats: PNG/JPG).
+1. **Upload an image** of your ingredients (PNG/JPG).
 
-2. Click **Detect Ingredients**. The application calls the vision pipeline and displays each ingredient with a color‑coded confidence indicator.
+2. Click **Detect Ingredients**. The graph runs the extraction and weather nodes and displays both the detected ingredients and a context message such as “It is currently 11 °C and light rain in Dublin at 5 PM.”
 
-3. Enter an optional preference (for example, “quick vegetarian lunch”) in the text input field. Click **Generate Recipe Suggestions** to receive 3–5 ideas tailored to your ingredients and preferences.
+3. **Enter a preference** (e.g. “quick vegetarian lunch”) and click **Generate Recipe Suggestions**. The graph resumes at the suggestion node, passes your preference and context into the prompt, and returns 3–5 recipe ideas.
 
-4. Choose one of the suggestions from the dropdown and click **Get Final Recipe** to view a complete recipe with ingredients, instructions, cooking time and notes.
+4. **Select a suggestion** from the list and click **Get Final Recipe**. The graph resumes at the final node and produces a detailed recipe with ingredients, instructions, cooking time and chef’s notes.
 
-If the app cannot find your API key or encounters an error, an informative message will be displayed. Check your .env configuration and logs for details.
+If the app cannot find your API key or encounters an error, a descriptive message will appear. Check your .env configuration and the logs for details.
 
 ## Running Tests
 
-The project includes unit tests covering the core pipelines and validators. To execute the tests, run:
+Unit tests cover the vision and recipe pipelines, validators and the new weather functionality. To run the tests:
 
 pytest tests/
 
-The tests use mocking to simulate API responses and therefore do not require an internet connection or a valid API key. They verify success paths, error handling, retries and confidence filtering.
+The tests mock external API calls so they do not require network access or valid API keys. They verify success paths, error handling, retry behaviour and the proper propagation of the context string through the graph.
 
 ## Technology Choices
 
 | Technology | Role | Rationale |
 | :---- | :---- | :---- |
-| **Gemini 2.0 Flash** | Vision & text LLM | Native multi‑modal support with response\_schema for structured JSON output and low latency. |
-| **Streamlit** | UI framework | Simplifies building interactive Python apps without HTML/JS; ideal for demo purposes. |
-| **Pydantic v2** | Data validation & typing | Ensures AI responses conform to expected schemas; reduces runtime errors and simplifies downstream code. |
-| **Tenacity** | Retry logic | Provides exponential backoff and hooks for logging; essential for production‑grade API resilience. |
-| **Pillow (PIL)** | Image handling | Lightweight and robust library for reading various image formats. |
-| **Python‑Dotenv** | Secret management | Loads environment variables from a .env file; avoids hard‑coding secrets. |
+| **LangGraph** | Agent framework | Provides a stateful graph abstraction with built‑in checkpointing and human‑in‑the‑loop interruption. This enables multi‑step reasoning and clean separation between nodes. |
+| **Gemini 2.0 Flash** | Vision & text LLM | Offers integrated multi‑modal support and structured JSON output via response\_schema, reducing prompt engineering overhead. |
+| **Streamlit** | UI framework | Simplifies building interactive Python apps without HTML/JS; ideal for demonstrating the workflow. |
+| **Pydantic v2** | Data validation & typing | Ensures AI and weather API responses conform to expected schemas; reduces runtime errors and simplifies downstream code. |
+| **Tenacity** | Retry logic | Provides exponential backoff and logging hooks to make external calls resilient to transient failures. |
+| **Requests** | HTTP client | Used to call the wttr.in weather API. |
+| **System Time** | Time handling | Generates the current time based on the server's local system time. |
+| **Pillow (PIL)** | Image handling | Lightweight, robust library for reading and manipulating images. |
+| **python‑dotenv** | Secret management | Loads environment variables from a .env file, keeping secrets out of source control. |
 
 ## Limitations & Future Improvements
 
-* **LLM dependency and cost:** The quality of the output depends on the underlying Gemini model and may change over time. Running the model requires an API key and may incur costs.
+* **Limited weather granularity:** The weather context uses the first entry of current\_condition from wttr.in and may not capture hourly variations. 
 
 * **No persistence:** All state is held in memory via Streamlit’s session. In a production system you might persist previous sessions, user feedback or favorite recipes.
+* **Weather service has no SLA:** wttr.in is a community service; not ideal for guaranteed SLA/production.
 
-* **Scalability:** Streamlit is single‑process and not suitable for high‑traffic environments. To scale, the service layer (VisionPipeline and RecipePipeline) could be exposed via a REST or gRPC API behind a load balancer, and the UI moved to a separate front‑end.
+* **System Time Dependency:** The time is generated from the system's local clock so it is not ideal for production.
 
+<<<<<<< HEAD
+=======
+* **No persistence or personalisation:** Session data is stored in memory via Streamlit’s session state. A production service would persist user history, preferences and feedback in a database.
+
+* **Single‑user concurrency:** Streamlit’s single‑process nature means the app is not suited to high‑traffic scenarios. The core service layer could be exposed via a REST or gRPC API and the UI served separately for scalability.
+
+* **Partial test coverage:** While the unit tests cover critical functions, integration tests for the LangGraph orchestration and UI are limited. More comprehensive end‑to‑end tests and performance benchmarks would be beneficial.
+
+## Part B Reflection
+
+This project fulfills the "Learning & Exploration Challenge" of the technical interview assessment. 
+- **Google Antigravity**: While I had used this tool for small personal projects, this assessment allowed me to apply it to a production-like scenario.
+- **Gemini 2.0 Flash**: I chose this model to explore its **multimodal ease of use**, specifically how it simplifies architecture by handling both vision and complex reasoning in a single call with structured JSON output.
+- **LangGraph**: I had used LangGraph previously, but this project was my first opportunity to implement the newer **Human-in-the-Loop (HITL)** features, using interrupts to guide the user flow.
+
+See `LEARNING.md` for a deeper dive into these technical choices and the lessons learned.
+
+>>>>>>> Part-B
 ## Edge Case Handling & Robustness
 
 The assessment requires demonstrating how the system handles failures and edge cases. This implementation addresses several robustness scenarios:
@@ -150,6 +206,7 @@ The assessment requires demonstrating how the system handles failures and edge c
 3.  **Low-Confidence Detections**: The vision pipeline implements a filter (`INGREDIENT_CONFIDENCE_THRESHOLD`) to silently discard hallucinations or uncertain ingredients, ensuring only high-quality data reaches the recipe generator.
 4.  **LLM Output Validation**: We do not blindly trust the AI. Every response is parsed and immediately validated against Pydantic models. If the schema doesn't match, an `AppValidationError` is raised immediately, preventing "silent failures" downstream.
 5.  **Graph State Serialization**: To prevent the "Un-serializable Data" edge case common in distributed graphs, the `extract_ingredients_node` enforces that images are strictly converted to `bytes` and then cleared (`None`) after processing to keep checkpoints lightweight.
+
 
 ## Production Deployment Considerations
 
@@ -234,15 +291,31 @@ Development workflow
 4. Test: Write and run unit tests; fix failures; handle edge cases.
 5. Iterate: Refine prompts and validation until all tests pass.
 6. Deliver: Provide the final working application plus the CLAUDE.md documenting your AI‑assisted process and decisions.
+```
 
+## The Prompt Used to Refactor Step A to Step B
+The real prompt used to refactor the project is as follows:
+
+```text 
+I want to refactor the project.
+Please build a langgraph.StateGraph (or equivalent) that orchestrates my existing recipe helper services. The graph should have the following five nodes, executed in order:
+1. Extract ingredients – Create a node that accepts an uploaded image, instantiates VisionPipeline with the configured Gemini API key, and calls its extract_ingredients() method to return a validated IngredientList.
+2. Check weather and time – Add a node that reads my City from an environment variable (e.g. LOCATION_CITY) and fetches current weather conditions using the wttr.in free API. Combine the weather description (temperature, precipitation) with the current local time (use datetime.now() with my Dublin timezone) to produce a short string such as:
+“It is currently 5 °C and raining in Dublin at 3 PM.”
+Return this string so it can be used as additional context for recipe choices.
+3. Suggest recipes – (human in the loop interrupt) Define a node that accepts the ingredient list and the weather/time context, instantiates RecipePipeline, and calls its suggest_recipes() method. Pass the ingredient names and a prompt that includes the weather and time (e.g. “It is currently 5 °C and raining …; suggest appropriate dishes”), along with any user preference captured via a text input. The node should return the RecipeSuggestionList.
+4. Human review – (human in the loop interrupt) Add a node that pauses the graph and waits for the user to choose one of the suggested recipes. Use LangGraph’s human‑in‑the‑loop mechanism (e.g. raise langgraph.Pause()) to halt execution until the selection is provided. The selected recipe title should be passed to the next node.
+5. Generate final recipe – Finally, create a node that calls RecipePipeline.generate_final_recipe() with the chosen title, the original ingredients, and the same weather/time context. Return the resulting FinalRecipe model to the user.
+
+Ensure each node properly handles exceptions and validates model outputs. Use the existing logging and retry mechanisms where appropriate, and include the weather/time context in prompts to tailor recipes to current conditions.
+```
 
 Development Guideline
 * Use well-named variables and functions that convey intent 
 * Externalize prompts to a prompts module.
-* Add tenacity retry to service calls. Ensure logger logs retry and clearly captures specific exception (like 429 or 503). 
+* Add tenacity retry to service calls. Ensure logger logs retry and clearly captures specific exception (like 429 or 503). 
 * Use context managers to ensure resources are properly closed, preventing memory leaks.
 * Set token limits, temperature and safety settings on model calls.
 * Verify that response elements are valid against Pydantic models.
-* Use a domain-specific exception hierarchy such that someone may re-use portions of this codebase and be confident in the correctness of the answers produced.
 ```
 ---

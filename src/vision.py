@@ -8,6 +8,7 @@ from src.schemas import IngredientList
 from src.logger import get_request_logger, log_retry
 from src.prompts import INGREDIENT_EXTRACTION_PROMPT
 from src.exceptions import AppVisionError, AppValidationError
+from src.executor import run_cpu_bound
 
 
 class VisionPipeline:
@@ -26,13 +27,13 @@ class VisionPipeline:
         after=log_retry,
         reraise=True
     )
-    def extract_ingredients(self, image: Image.Image, request_id: str) -> IngredientList:
+    async def extract_ingredients(self, image: Image.Image, request_id: str) -> IngredientList:
         logger = get_request_logger(request_id)
         logger.debug(f"ENTERING: extract_ingredients with request_id={request_id}")
         logger.info("Starting ingredient extraction from image")
 
         try:
-            response = self.client.models.generate_content(
+            response = await self.client.aio.models.generate_content(
                 model=self.model_id,
                 contents=[INGREDIENT_EXTRACTION_PROMPT, image],
                 config=types.GenerateContentConfig(
@@ -55,7 +56,7 @@ class VisionPipeline:
 
             # Explicitly validate against Pydantic model else ValidationError
             try:
-                IngredientList.model_validate(response.parsed)
+                await run_cpu_bound(IngredientList.model_validate, response.parsed)
             except Exception as e:
                 logger.error(f"Validation failed: {str(e)}")
                 raise AppValidationError(f"Invalid ingredient data format: {str(e)}") from e

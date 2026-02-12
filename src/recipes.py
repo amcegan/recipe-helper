@@ -6,6 +6,7 @@ from src.schemas import Ingredient, RecipeSuggestionList, FinalRecipe
 from src.logger import get_request_logger, log_retry
 from src.prompts import RECIPE_SUGGESTION_PROMPT, FINAL_RECIPE_PROMPT
 from src.exceptions import AppRecipeError, AppValidationError
+from src.executor import run_cpu_bound
 
 
 class RecipePipeline:
@@ -19,7 +20,7 @@ class RecipePipeline:
         after=log_retry,
         reraise=True
     )
-    def suggest_recipes(self, ingredients: List[Ingredient], preference: Optional[str], context: Optional[str], request_id: str) -> RecipeSuggestionList:
+    async def suggest_recipes(self, ingredients: List[Ingredient], preference: Optional[str], context: Optional[str], request_id: str) -> RecipeSuggestionList:
         logger = get_request_logger(request_id)
         logger.debug(f"ENTERING: suggest_recipes with request_id={request_id}, preference={preference}")
         logger.info(f"Generating recipe suggestions with preference: {preference}")
@@ -32,7 +33,7 @@ class RecipePipeline:
         )
 
         try:
-            response = self.client.models.generate_content(
+            response = await self.client.aio.models.generate_content(
                 model=self.model_id,
                 contents=prompt,
                 config=types.GenerateContentConfig(
@@ -53,7 +54,7 @@ class RecipePipeline:
             
             # Explicitly validate against Pydantic model else ValidationError
             try:
-                RecipeSuggestionList.model_validate(response.parsed)
+                await run_cpu_bound(RecipeSuggestionList.model_validate, response.parsed)
             except Exception as e:
                 logger.error(f"Validation failed: {str(e)}")
                 raise AppValidationError(f"Invalid recipe suggestion format: {str(e)}") from e
@@ -72,7 +73,7 @@ class RecipePipeline:
         after=log_retry,
         reraise=True
     )
-    def generate_final_recipe(self, suggestion_title: str, ingredients: List[Ingredient], preference: Optional[str], context: Optional[str], request_id: str) -> FinalRecipe:
+    async def generate_final_recipe(self, suggestion_title: str, ingredients: List[Ingredient], preference: Optional[str], context: Optional[str], request_id: str) -> FinalRecipe:
         logger = get_request_logger(request_id)
         logger.debug(f"ENTERING: generate_final_recipe for {suggestion_title}, request_id={request_id}")
         logger.info(f"Generating final recipe for: {suggestion_title}")
@@ -86,7 +87,7 @@ class RecipePipeline:
         )
 
         try:
-            response = self.client.models.generate_content(
+            response = await self.client.aio.models.generate_content(
                 model=self.model_id,
                 contents=prompt,
                 config=types.GenerateContentConfig(
@@ -108,7 +109,7 @@ class RecipePipeline:
             
             # Explicitly validate against Pydantic model
             try:
-                FinalRecipe.model_validate(response.parsed)
+                await run_cpu_bound(FinalRecipe.model_validate, response.parsed)
             except Exception as e:
                 logger.error(f"Validation failed: {str(e)}")
                 raise AppValidationError(f"Invalid final recipe format: {str(e)}") from e
