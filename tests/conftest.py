@@ -6,7 +6,7 @@ from unittest.mock import MagicMock, AsyncMock, patch
 def mock_run_cpu_bound():
     """
     Globally mock run_cpu_bound to just execute the function directly in tests.
-    This avoids needing a Dask cluster for unit tests.
+    This avoids needing a ProcessPoolExecutor for unit tests.
     """
     async def mock_run(func, *args, **kwargs):
         return func(*args, **kwargs)

@@ -9,8 +9,6 @@ tenacity==9.1.2
 langgraph==1.0.5
 requests==2.32.5
 httpx==0.28.1
-dask==2026.1.2
-distributed==2026.1.2
 pytz==2025.2
 pytest-asyncio==0.25.3
 structlog==25.1.0
