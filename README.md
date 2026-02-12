@@ -1,5 +1,8 @@
 # Recipe Helper – AI‑Powered Recipe Recommendation System (LangGraph Edition)
 
+This project is mainly an exercise in using Google Antigravity as a code assistant. 
+98% of the code was written by the agent with the focus being on managing the agent through promting and agent rules e.g. coding standards.
+
 Recipe Helper is an AI‑powered culinary companion that turns photos of your pantry into delicious meal ideas. After implementing the core GenAI pipeline in Part A, this refactored version introduces **LangGraph** orchestration and **situational context** (weather and time) to satisfy the Part B learning challenge from the technical assessment. The application now executes as a stateful graph with human‑in‑the‑loop pauses and enriches model prompts with live weather data and the current time in Dublin.
 
 It demonstrates an end‑to‑end workflow using a vision‑capable large language model to extract ingredients from an image, reason about how the ingredients fit together, and synthesize an easy‑to‑follow recipe tailored to the user's preferences. The project emphasizes safety, reliability and clear separation of concerns so that the core services can be reused as a library or extended for future work.
