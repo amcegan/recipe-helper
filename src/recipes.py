@@ -9,6 +9,7 @@ from src.schemas import Ingredient, RecipeSuggestionList, FinalRecipe
 from src.logger import get_request_logger, log_retry, log_entry_exit
 from src.prompts import RECIPE_SUGGESTION_PROMPT, FINAL_RECIPE_PROMPT
 from src.exceptions import AppRecipeError, AppValidationError
+from src.security import safe_error_message
 from src.executor import run_cpu_bound
 
 
@@ -84,12 +85,12 @@ class RecipePipeline:
             try:
                 await run_cpu_bound(RecipeSuggestionList.model_validate, response.parsed)
             except Exception as e:
-                logger.error(f"Validation failed: {str(e)}")
-                raise AppValidationError(f"Invalid recipe suggestion format: {str(e)}") from e
+                logger.error(f"Validation failed: {safe_error_message(e)}")
+                raise AppValidationError(f"Invalid recipe suggestion format: {safe_error_message(e)}") from e
             
             return response.parsed
         except Exception as e:
-            logger.error(f"Error suggesting recipes: {str(e)}")
+            logger.error(f"Error suggesting recipes: {safe_error_message(e)}")
             if isinstance(e, (AppRecipeError, AppValidationError)):
                 raise e
             raise AppRecipeError(f"Unexpected error in Recipe Pipeline (suggestions): {str(e)}") from e
@@ -155,12 +156,12 @@ class RecipePipeline:
             try:
                 await run_cpu_bound(FinalRecipe.model_validate, response.parsed)
             except Exception as e:
-                logger.error(f"Validation failed: {str(e)}")
-                raise AppValidationError(f"Invalid final recipe format: {str(e)}") from e
+                logger.error(f"Validation failed: {safe_error_message(e)}")
+                raise AppValidationError(f"Invalid final recipe format: {safe_error_message(e)}") from e
             
             return response.parsed
         except Exception as e:
-            logger.error(f"Error generating final recipe: {str(e)}")
+            logger.error(f"Error generating final recipe: {safe_error_message(e)}")
             if isinstance(e, (AppRecipeError, AppValidationError)):
                 raise e
             raise AppRecipeError(f"Unexpected error in Recipe Pipeline (final): {str(e)}") from e

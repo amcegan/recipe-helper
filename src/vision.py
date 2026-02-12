@@ -12,6 +12,7 @@ from src.schemas import IngredientList
 from src.logger import get_request_logger, log_retry, log_entry_exit
 from src.prompts import INGREDIENT_EXTRACTION_PROMPT
 from src.exceptions import AppVisionError, AppValidationError
+from src.security import safe_error_message
 from src.executor import run_cpu_bound
 from src.config import settings
 
@@ -83,8 +84,8 @@ class VisionPipeline:
             try:
                 await run_cpu_bound(IngredientList.model_validate, response.parsed)
             except Exception as e:
-                logger.error(f"Validation failed: {str(e)}")
-                raise AppValidationError(f"Invalid ingredient data format: {str(e)}") from e
+                logger.error(f"Validation failed: {safe_error_message(e)}")
+                raise AppValidationError(f"Invalid ingredient data format: {safe_error_message(e)}") from e
 
             # Filter by confidence
             original_count = len(response.parsed.ingredients)
@@ -100,7 +101,7 @@ class VisionPipeline:
             logger.info("Successfully extracted ingredients", count=filtered_count)
             return response.parsed
         except Exception as e:
-            logger.error(f"Error during extraction: {str(e)}")
+            logger.error(f"Error during extraction: {safe_error_message(e)}")
             if isinstance(e, (AppVisionError, AppValidationError)):
                 raise e
             # Re-wrap unexpected exceptions for consistent library interface

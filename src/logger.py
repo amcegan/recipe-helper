@@ -73,13 +73,39 @@ def get_request_logger(request_id: Optional[str] = None) -> Any:
     
     return structlog.get_logger()
 
+import inspect
+
 def log_entry_exit(func: Callable) -> Callable:
-    """Decorator to log function entry and exit with duration."""
+    """Decorator to log function entry and exit with duration. Supports sync and async."""
+    
     @functools.wraps(func)
-    def wrapper(*args, **kwargs):
+    async def async_wrapper(*args, **kwargs):
         logger = structlog.get_logger()
         start_time = time.perf_counter()
-        
+        logger.info(f"Entering {func.__name__} (async)", function=func.__name__)
+        try:
+            result = await func(*args, **kwargs)
+            duration = time.perf_counter() - start_time
+            logger.info(
+                f"Exiting {func.__name__} (async)", 
+                function=func.__name__, 
+                duration_ms=round(duration * 1000, 2)
+            )
+            return result
+        except Exception as e:
+            duration = time.perf_counter() - start_time
+            logger.error(
+                f"Exception in {func.__name__} (async)", 
+                function=func.__name__, 
+                error=safe_error_message(e),
+                duration_ms=round(duration * 1000, 2)
+            )
+            raise
+
+    @functools.wraps(func)
+    def sync_wrapper(*args, **kwargs):
+        logger = structlog.get_logger()
+        start_time = time.perf_counter()
         logger.info(f"Entering {func.__name__}", function=func.__name__)
         try:
             result = func(*args, **kwargs)
@@ -95,11 +121,14 @@ def log_entry_exit(func: Callable) -> Callable:
             logger.error(
                 f"Exception in {func.__name__}", 
                 function=func.__name__, 
-                error=str(e),
+                error=safe_error_message(e),
                 duration_ms=round(duration * 1000, 2)
             )
             raise
-    return wrapper
+
+    if inspect.iscoroutinefunction(func):
+        return async_wrapper
+    return sync_wrapper
 
 def log_retry(retry_state):
     """Callback for tenacity to log retry attempts using structlog."""
