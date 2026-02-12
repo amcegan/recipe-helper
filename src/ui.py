@@ -11,7 +11,7 @@ from src.recipes import RecipePipeline
 from src.logger import get_request_logger, setup_logger, log_entry_exit
 from src.executor import run_cpu_bound
 from src.config import settings
-from src.graph import create_recipe_graph
+from src.graph import create_recipe_graph, get_initial_state, update_user_preference, update_selected_recipe
 from src.security import safe_error_message
 
 def image_to_bytes(img):
@@ -68,17 +68,7 @@ def render_ui():
     if "graph" not in st.session_state:
         st.session_state.graph = create_recipe_graph()
         st.session_state.config = {"configurable": {"thread_id": request_id}}
-        st.session_state.graph_state = {
-            "image": None,
-            "ingredients": None,
-            "context": None,
-            "suggestions": None,
-            "selected_recipe": None,
-            "user_preference": "",
-            "final_recipe": None,
-            "request_id": request_id,
-            "error": None
-        }
+        st.session_state.graph_state = get_initial_state(request_id)
 
     # API Key is validated by Pydantic on Settings instantiation.
     # If it's missing, the app will fail to start-up with a clear error.
@@ -130,9 +120,10 @@ def render_ui():
             with st.spinner("Thinking of recipes..."):
                 # Update preference and resume graph
                 pref = st.session_state.pref_input
-                st.session_state.graph.update_state(
+                update_user_preference(
+                    st.session_state.graph,
                     st.session_state.config,
-                    {"user_preference": pref}
+                    pref
                 )
                 
                 asyncio.run(run_graph(
@@ -154,9 +145,10 @@ def render_ui():
         if st.button("Get Final Recipe"):
             with st.spinner("Preparing detailed recipe..."):
                 # Update selection and resume graph
-                st.session_state.graph.update_state(
+                update_selected_recipe(
+                    st.session_state.graph,
                     st.session_state.config,
-                    {"selected_recipe": chosen_title}
+                    chosen_title
                 )
                 
                 asyncio.run(run_graph(

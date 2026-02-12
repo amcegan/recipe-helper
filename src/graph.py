@@ -222,3 +222,47 @@ def create_recipe_graph():
     # and AT human_review to let the user select a recipe.
     checkpointer = MemorySaver()
     return workflow.compile(checkpointer=checkpointer, interrupt_before=["suggest_recipes", "human_review"])
+
+def get_initial_state(request_id: str) -> RecipeState:
+    """
+    Creates a new initial state for the recipe generation graph.
+
+    Args:
+        request_id (str): Unique request identifier.
+
+    Returns:
+        RecipeState: The initial graph state.
+    """
+    return {
+        "image": None,
+        "ingredients": None,
+        "context": None,
+        "suggestions": None,
+        "selected_recipe": None,
+        "user_preference": "",
+        "final_recipe": None,
+        "request_id": request_id,
+        "error": None
+    }
+
+def update_user_preference(graph, config: dict, preference: str):
+    """
+    Updates the user preference in the graph state.
+
+    Args:
+        graph (CompiledGraph): The compiled LangGraph workflow.
+        config (dict): Configuration for the graph run (identifies the thread).
+        preference (str): The new user preference string.
+    """
+    graph.update_state(config, {"user_preference": preference})
+
+def update_selected_recipe(graph, config: dict, recipe_title: str):
+    """
+    Updates the selected recipe title in the graph state.
+
+    Args:
+        graph (CompiledGraph): The compiled LangGraph workflow.
+        config (dict): Configuration for the graph run.
+        recipe_title (str): The title of the selected recipe.
+    """
+    graph.update_state(config, {"selected_recipe": recipe_title})
