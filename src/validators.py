@@ -26,22 +26,3 @@ def validate_llm_json(content: str, schema: Type[T], request_id: str) -> T:
     except ValidationError as e:
         logger.error(f"Schema validation error: {str(e)}")
         raise AppValidationError(f"Schema validation failed: {str(e)}") from e
-
-def retry_llm_call(func: Any, max_retries: int = 2, *args: Any, **kwargs: Any) -> Any:
-    """
-    Generic retry wrapper for LLM calls that might fail validation.
-    """
-    logger = get_request_logger(kwargs.get("request_id", "N/A"))
-    logger.debug(f"ENTERING: retry_llm_call with func={func.__name__}")
-    last_error = None
-    for attempt in range(max_retries + 1):
-        try:
-            result = func(*args, **kwargs)
-            logger.debug(f"EXITING: retry_llm_call - success on attempt {attempt}")
-            return result
-        except Exception as e:
-            logger.warning(f"Attempt {attempt} failed: {str(e)}")
-            last_error = e
-            continue
-    logger.debug("EXITING: retry_llm_call - all attempts failed")
-    raise last_error
