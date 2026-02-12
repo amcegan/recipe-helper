@@ -1,3 +1,7 @@
+"""
+Orchestration module defining the LangGraph workflow for recipe generation.
+Includes weather context fetching, ingredient extraction, and recipe suggestion nodes.
+"""
 from src.config import settings
 import httpx
 from datetime import datetime
@@ -6,7 +10,7 @@ from langgraph.graph import StateGraph, START, END
 from src.vision import VisionPipeline
 from src.recipes import RecipePipeline
 from src.schemas import RecipeState, IngredientList, RecipeSuggestionList, FinalRecipe, WeatherResponse
-from src.logger import get_request_logger
+from src.logger import get_request_logger, log_entry_exit
 from src.exceptions import AppVisionError, AppRecipeError, AppValidationError
 from src.executor import run_cpu_bound
 from src.security import safe_error_message
@@ -14,8 +18,14 @@ from src.security import safe_error_message
 # Constants
 WEATHER_API_BASE_URL = "https://wttr.in"
 
+@log_entry_exit
 async def get_weather_context():
-    """Fetches weather context from wttr.in and current Dublin time."""
+    """
+    Fetches weather context from wttr.in and current Dublin time.
+
+    Returns:
+        str: A formatted string describing the current weather and time.
+    """
     city = settings.location_city
     
     # Weather API (wttr.in)
@@ -59,8 +69,18 @@ def process_image(b):
         return img
 
 async def extract_ingredients_node(state: RecipeState):
+    """
+    Node for extracting ingredients from an image.
+    Uses VisionPipeline to process the image and extract a list of ingredients.
+
+    Args:
+        state (RecipeState): The current graph state.
+
+    Returns:
+        dict: A dictionary containing the extracted ingredients or an error message.
+    """
     logger = get_request_logger(state['request_id'])
-    logger.debug(f"ENTERING Node: extract_ingredients - Image type: {type(state.get('image'))}")
+    logger.debug("Processing extraction node", image_type=str(type(state.get('image'))))
     
     if not state.get('image'):
         return {"error": "No image provided for ingredient extraction"}
@@ -85,14 +105,34 @@ async def extract_ingredients_node(state: RecipeState):
         return {"error": safe_error_message(e)}
 
 async def check_weather_node(state: RecipeState):
+    """
+    Node for fetching current weather context.
+    Calls get_weather_context and updates the state with the context string.
+
+    Args:
+        state (RecipeState): The current graph state.
+
+    Returns:
+        dict: A dictionary containing the weather context string.
+    """
     logger = get_request_logger(state['request_id'])
-    logger.debug("ENTERING Node: check_weather")
+    logger.debug("Processing weather node")
     context = await get_weather_context()
     return {"context": context}
 
 async def suggest_recipes_node(state: RecipeState):
+    """
+    Node for generating recipe suggestions.
+    Uses RecipePipeline to suggest recipes based on ingredients, preferences, and context.
+
+    Args:
+        state (RecipeState): The current graph state.
+
+    Returns:
+        dict: A dictionary containing the list of recipe suggestions or an error message.
+    """
     logger = get_request_logger(state['request_id'])
-    logger.debug("ENTERING Node: suggest_recipes")
+    logger.debug("Processing suggestions node")
     
     api_key = settings.gemini_api_key
     recipe_pipeline = RecipePipeline(api_key)
@@ -110,12 +150,32 @@ async def suggest_recipes_node(state: RecipeState):
         return {"error": safe_error_message(e)}
 
 async def human_review_node(state: RecipeState):
+    """
+    Node that serves as an interruption point for human review.
+    This node simply returns the current state and is meant to be interrupted.
+
+    Args:
+        state (RecipeState): The current graph state.
+
+    Returns:
+        RecipeState: The unchanged state.
+    """
     # This node will be interrupted.
     return state
 
 async def generate_final_recipe_node(state: RecipeState):
+    """
+    Node for generating a detailed final recipe.
+    Uses RecipePipeline to create a full recipe for the selected suggestion.
+
+    Args:
+        state (RecipeState): The current graph state.
+
+    Returns:
+        dict: A dictionary containing the final recipe object or an error message.
+    """
     logger = get_request_logger(state['request_id'])
-    logger.debug("ENTERING Node: generate_final_recipe")
+    logger.debug("Processing final recipe node")
     
     api_key = settings.gemini_api_key
     recipe_pipeline = RecipePipeline(api_key)
@@ -136,6 +196,13 @@ async def generate_final_recipe_node(state: RecipeState):
 # Build Graph
 
 def create_recipe_graph():
+    """
+    Constructs and compiles the recipe generation graph.
+    Defines the nodes, edges, and interruption points for the workflow.
+
+    Returns:
+        CompiledGraph: The compiled LangGraph workflow.
+    """
     workflow = StateGraph(RecipeState)
     
     workflow.add_node("extract_ingredients", extract_ingredients_node)
@@ -155,3 +222,47 @@ def create_recipe_graph():
     # and AT human_review to let the user select a recipe.
     checkpointer = MemorySaver()
     return workflow.compile(checkpointer=checkpointer, interrupt_before=["suggest_recipes", "human_review"])
+
+def get_initial_state(request_id: str) -> RecipeState:
+    """
+    Creates a new initial state for the recipe generation graph.
+
+    Args:
+        request_id (str): Unique request identifier.
+
+    Returns:
+        RecipeState: The initial graph state.
+    """
+    return {
+        "image": None,
+        "ingredients": None,
+        "context": None,
+        "suggestions": None,
+        "selected_recipe": None,
+        "user_preference": "",
+        "final_recipe": None,
+        "request_id": request_id,
+        "error": None
+    }
+
+def update_user_preference(graph, config: dict, preference: str):
+    """
+    Updates the user preference in the graph state.
+
+    Args:
+        graph (CompiledGraph): The compiled LangGraph workflow.
+        config (dict): Configuration for the graph run (identifies the thread).
+        preference (str): The new user preference string.
+    """
+    graph.update_state(config, {"user_preference": preference})
+
+def update_selected_recipe(graph, config: dict, recipe_title: str):
+    """
+    Updates the selected recipe title in the graph state.
+
+    Args:
+        graph (CompiledGraph): The compiled LangGraph workflow.
+        config (dict): Configuration for the graph run.
+        recipe_title (str): The title of the selected recipe.
+    """
+    graph.update_state(config, {"selected_recipe": recipe_title})

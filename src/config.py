@@ -21,6 +21,8 @@ class Settings(BaseSettings):
     location_city: str = Field("Dublin", alias="LOCATION_CITY")
     log_level: str = Field("INFO", alias="LOG_LEVEL")
     ingredient_confidence_threshold: float = Field(0.0, alias="INGREDIENT_CONFIDENCE_THRESHOLD")
+    aws_cloudwatch_group: Optional[str] = Field(None, alias="AWS_CLOUDWATCH_GROUP")
+    aws_region: str = Field("us-east-1", alias="AWS_REGION")
 
     @field_validator("log_level")
     @classmethod

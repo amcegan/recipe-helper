@@ -1,35 +1,53 @@
+"""
+Module for managing parallel execution using concurrent.futures.
+Provides a thread-safe singleton ProcessPoolExecutor for handling CPU-bound tasks.
+"""
 import asyncio
 import threading
+from concurrent.futures import ProcessPoolExecutor
 from typing import Callable, Any
-from distributed import Client
+from src.logger import log_entry_exit
 
-_dask_client = None
-_client_lock = threading.Lock()
+_executor = None
+_executor_lock = threading.Lock()
 
-def get_client():
+def get_executor():
     """
-    Returns a thread-safe, synchronous Dask Client.
-    Synchronous clients are more robust in Streamlit's ephemeral event loop environment
-    because they manage their own internal lifecycle independent of the calling thread's loop.
-    """
-    global _dask_client
-    with _client_lock:
-        if _dask_client is None or getattr(_dask_client, "status", None) != "running":
-            # Using synchronous Client (asynchronous=False)
-            # This creates a persistent cluster that survives asyncio.run() calls.
-            _dask_client = Client(n_workers=4, threads_per_worker=1, asynchronous=False)
-        return _dask_client
+    Returns a thread-safe singleton ProcessPoolExecutor instance.
+    The executor is initialized with a fixed number of workers.
 
+    Returns:
+        ProcessPoolExecutor: The global process pool executor.
+    """
+    global _executor
+    with _executor_lock:
+        if _executor is None:
+            # Initialize the executor with 4 workers as a reasonable default
+            _executor = ProcessPoolExecutor(max_workers=4)
+        return _executor
+
+@log_entry_exit
 async def run_cpu_bound(func: Callable, *args, **kwargs) -> Any:
     """
-    Runs a CPU-bound function using Dask.
-    Compatible with LangGraph (async) and Streamlit (multiple asyncio.run calls).
+    Runs a CPU-bound function in a separate process to avoid blocking the event loop.
+    Compatible with LangGraph (async) and Streamlit environments.
+
+    Args:
+        func (Callable): The function to execute.
+        *args: Variable length argument list for the function.
+        **kwargs: Arbitrary keyword arguments for the function.
+
+    Returns:
+        Any: The result of the function execution.
     """
-    # Get the sync client in a thread-safe way
-    client = await asyncio.to_thread(get_client)
+    loop = asyncio.get_running_loop()
+    executor = get_executor()
     
-    # Submit the task to Dask (non-blocking, returns a sync Future)
-    future = client.submit(func, *args, **kwargs)
+    # ProcessPoolExecutor.submit doesn't support kwargs directly for the function call.
+    # We wrap it in a partial-like way if kwargs are provided.
+    if kwargs:
+        def wrapper():
+            return func(*args, **kwargs)
+        return await loop.run_in_executor(executor, wrapper)
     
-    # Await the result in a separate thread to avoid blocking the current event loop
-    return await asyncio.to_thread(future.result)
+    return await loop.run_in_executor(executor, func, *args)

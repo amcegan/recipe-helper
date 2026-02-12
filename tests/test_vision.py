@@ -78,3 +78,16 @@ async def test_extract_ingredients_confidence_filtering(vision_pipeline):
         
         assert len(result.ingredients) == 1
         assert result.ingredients[0].name == "carrot"
+
+@pytest.mark.asyncio
+async def test_extract_ingredients_all_retries_fail(vision_pipeline):
+    with patch.object(vision_pipeline.client.aio.models, 'generate_content', new_callable=AsyncMock) as mock_gen:
+        mock_gen.side_effect = Exception("Permanent Error")
+        
+        img = Image.new('RGB', (100, 100))
+        # Reduce retry wait for tests
+        with patch('src.vision.wait_exponential', return_value=pytest.importorskip("tenacity").wait_none()):
+            with pytest.raises(AppVisionError):
+                await vision_pipeline.extract_ingredients(img, "test_id")
+            
+            assert mock_gen.call_count == 3
