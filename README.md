@@ -131,7 +131,7 @@ cp .env.example .env # Add your GEMINI_API_KEY
 streamlit run main.py
 
 # Test
-pytest
+PYTHONPATH=. GEMINI_API_KEY=fake_key ./venv/bin/pytest tests/
 ```
 
 1. **Configure environment variables**:

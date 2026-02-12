@@ -27,11 +27,14 @@ async def get_weather_context():
             if response.status_code == 200:
                 # Validate with Pydantic
                 weather_data = await run_cpu_bound(WeatherResponse.model_validate, response.json())
-                current = weather_data.current_condition[0]
-                temp = current.temp_C
-                desc = current.weatherDesc[0].value.lower()
-                weather_desc = f"{temp} °C and {desc}"
-    except Exception:
+                if weather_data.current_condition:
+                    current = weather_data.current_condition[0]
+                    temp = current.temp_C
+                    desc = "mild"
+                    if current.weatherDesc:
+                        desc = current.weatherDesc[0].value.lower()
+                    weather_desc = f"{temp} °C and {desc}"
+    except Exception as e:
         # Fallback to defaults
         pass
 

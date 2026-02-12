@@ -88,7 +88,8 @@ def render_ui():
     if st.session_state.graph_state.get("ingredients"):
         st.divider()
         st.header("2. Detected Ingredients")
-        for ing in st.session_state.graph_state["ingredients"]:
+        ingredients = st.session_state.graph_state.get("ingredients") or []
+        for ing in ingredients:
             confidence_color = "green" if ing.confidence > 0.8 else "orange" if ing.confidence > 0.5 else "red"
             st.markdown(f"- **{ing.name}** (Confidence: :{confidence_color}[{ing.confidence:.2f}])")
 
@@ -145,12 +146,14 @@ def render_ui():
         st.header(f"📖 Final Recipe: {recipe.title}")
         
         st.subheader("Ingredients")
-        for item in recipe.ingredients:
+        recipe_ingredients = recipe.ingredients or []
+        for item in recipe_ingredients:
             st.write(f"- {item}")
         st.info(f"**Cooking Time:** {recipe.cooking_time}")
 
         st.subheader("Instructions")
-        for i, step in enumerate(recipe.steps, 1):
+        recipe_steps = recipe.steps or []
+        for i, step in enumerate(recipe_steps, 1):
             st.write(f"{i}. {step}")
         
         if recipe.notes:
