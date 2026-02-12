@@ -9,16 +9,13 @@ from src.logger import get_request_logger, log_retry
 from src.prompts import INGREDIENT_EXTRACTION_PROMPT
 from src.exceptions import AppVisionError, AppValidationError
 from src.executor import run_cpu_bound
-
+from src.config import settings
 
 class VisionPipeline:
     def __init__(self, api_key: str):
         self.client = genai.Client(api_key=api_key)
         self.model_id = "gemini-2.0-flash"   # Multi-modal model
-        try:
-            self.confidence_threshold = float(os.getenv("INGREDIENT_CONFIDENCE_THRESHOLD", "0.0"))
-        except ValueError:
-            self.confidence_threshold = 0.0
+        self.confidence_threshold = settings.ingredient_confidence_threshold
 
     
     @retry(
