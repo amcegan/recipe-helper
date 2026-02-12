@@ -15,6 +15,7 @@ It demonstrates an end‑to‑end workflow using a vision‑capable large langua
 | **README.md (this file)** | Users / Developers | Project overview, setup, running instructions, architectural design and trade‑offs, and limitations. |
 | **project‑prompt.md** | Developers | Blueprint for recreating this version of the project from scratch, including high‑level requirements, module responsibilities and development guidelines. |
 | **learning.md** | Developers / Reviewers | Reflection on the LangGraph refactoring experiment: resources consulted, challenges encountered, and insights gained from integrating stateful workflows. |
+| **CHANGELOG.md** | Developers / Users | Chronological record of major changes, refactors, and features since the project's inception. |
 | **.agent/agents.md** | AI Agents | Context and constraints for AI code generation, including safety, coding standards and agent workflows. |
 | **.agent/rules/python‑standards.md** | Developers / AI Agents | Detailed Python coding standards used throughout the project. |
 
