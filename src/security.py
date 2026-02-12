@@ -1,3 +1,7 @@
+"""
+Security module for sanitizing sensitive data.
+Provides utilities for masking API keys and other secrets in logs and UI messages.
+"""
 import re
 from src.config import settings
 
@@ -5,6 +9,12 @@ def mask_secrets(text: str) -> str:
     """
     Scans text for known sensitive strings (like API keys) and masks them.
     Currently masks the Gemini API key if present.
+
+    Args:
+        text (str): The input string to sanitize.
+
+    Returns:
+        str: The sanitized string with secrets masked.
     """
     if not text:
         return text
@@ -19,6 +29,12 @@ def mask_secrets(text: str) -> str:
 def safe_error_message(e: Exception) -> str:
     """
     Converts an exception to a sanitized string suitable for UI display or logs.
+
+    Args:
+        e (Exception): The exception to sanitize.
+
+    Returns:
+        str: A masked and sanitized error message.
     """
     raw_msg = str(e)
     return mask_secrets(raw_msg)

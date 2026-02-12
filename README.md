@@ -278,7 +278,7 @@ Prompting strategy and guard rails
 
 Rules and workflows (Antigravity configuration)
 * Create workspace Rules to enforce:
-    * PEP 8 styling and proper documentation
+    * PEP 8 styling and comprehensive documentation (mandatory docstrings with `Args` and `Returns` for all public modules, classes, and functions).
     * Modular code generation—business logic must be in dedicated modules, not in main().
     * Consistent naming conventions and type hints.
 * Define a generate‑unit‑tests workflow to generate and run unit tests on demand.
@@ -319,7 +319,8 @@ Ensure each node properly handles exceptions and validates model outputs. Use th
 ```
 
 Development Guideline
-* Use well-named variables and functions that convey intent 
+* Use well-named variables and functions that convey intent.
+* **Mandatory Documentation**: Every public module, class, and function must include a docstring with parameter and return descriptions.
 * Externalize prompts to a prompts module.
 * Add tenacity retry to service calls. Ensure logger logs retry and clearly captures specific exception (like 429 or 503). 
 * Use context managers to ensure resources are properly closed, preventing memory leaks.

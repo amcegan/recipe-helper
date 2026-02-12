@@ -53,6 +53,7 @@ You are building a modular, production-ready Python application that recommends 
 - **Separation of Concerns**: Keep business logic in `src/` and presentation logic in `ui.py`.
 - **Security**: Mask known secrets in all error messages and logs shown in the UI. Never expose the full `settings` object to the frontend.
 - **Modularity**: Prompts should be templated and accept `ingredients`, `context`, and `preference` as variables.
+- **Comprehensive Documentation**: Every public module, class, and function must have a docstring. Docstrings should include a brief description, as well as `Args` and `Returns` sections with type and purpose information.
 
 ## Security & Secrets
 

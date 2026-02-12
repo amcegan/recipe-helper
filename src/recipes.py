@@ -1,3 +1,6 @@
+"""
+Recipe pipeline module for generating suggestions and final recipes using Gemini.
+"""
 from google import genai
 from google.genai import types
 from tenacity import retry, stop_after_attempt, wait_exponential
@@ -10,7 +13,16 @@ from src.executor import run_cpu_bound
 
 
 class RecipePipeline:
+    """
+    Pipeline for generating recipe suggestions and detailed recipes using Gemini-2.0-flash.
+    """
     def __init__(self, api_key: str):
+        """
+        Initializes the RecipePipeline with a Gemini API key.
+
+        Args:
+            api_key (str): The Google Gemini API key.
+        """
         self.client = genai.Client(api_key=api_key)
         self.model_id = "gemini-2.0-flash"
 
@@ -21,6 +33,22 @@ class RecipePipeline:
         reraise=True
     )
     async def suggest_recipes(self, ingredients: List[Ingredient], preference: Optional[str], context: Optional[str], request_id: str) -> RecipeSuggestionList:
+        """
+        Generates 3-5 recipe suggestions based on a list of ingredients and user preferences.
+
+        Args:
+            ingredients (List[Ingredient]): List of available ingredients.
+            preference (Optional[str]): User preferences (e.g., "vegetarian").
+            context (Optional[str]): Environmental context (e.g., weather/time).
+            request_id (str): Unique request identifier for logging.
+
+        Returns:
+            RecipeSuggestionList: A list of recipe suggestions.
+
+        Raises:
+            AppRecipeError: If the Gemini API fails or returns no content.
+            AppValidationError: If the returned data does not match the expected schema.
+        """
         logger = get_request_logger(request_id)
         logger.debug(f"ENTERING: suggest_recipes with request_id={request_id}, preference={preference}")
         logger.info(f"Generating recipe suggestions with preference: {preference}")
@@ -74,6 +102,23 @@ class RecipePipeline:
         reraise=True
     )
     async def generate_final_recipe(self, suggestion_title: str, ingredients: List[Ingredient], preference: Optional[str], context: Optional[str], request_id: str) -> FinalRecipe:
+        """
+        Generates a detailed, full-length recipe for a selected suggestion.
+
+        Args:
+            suggestion_title (str): The title of the chosen recipe suggestion.
+            ingredients (List[Ingredient]): List of available ingredients.
+            preference (Optional[str]): User preferences.
+            context (Optional[str]): Environmental context.
+            request_id (str): Unique request identifier for logging.
+
+        Returns:
+            FinalRecipe: A detailed recipe object including steps and notes.
+
+        Raises:
+            AppRecipeError: If the Gemini API fails or returns no content.
+            AppValidationError: If the returned data does not match the expected schema.
+        """
         logger = get_request_logger(request_id)
         logger.debug(f"ENTERING: generate_final_recipe for {suggestion_title}, request_id={request_id}")
         logger.info(f"Generating final recipe for: {suggestion_title}")

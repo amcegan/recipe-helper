@@ -1,3 +1,7 @@
+"""
+Module for managing distributed execution using Dask.
+Provides a thread-safe singleton client for handling CPU-bound tasks in a Streamlit-compatible way.
+"""
 import asyncio
 import threading
 from typing import Callable, Any
@@ -11,6 +15,9 @@ def get_client():
     Returns a thread-safe, synchronous Dask Client.
     Synchronous clients are more robust in Streamlit's ephemeral event loop environment
     because they manage their own internal lifecycle independent of the calling thread's loop.
+
+    Returns:
+        Client: A synchronous Dask Client instance.
     """
     global _dask_client
     with _client_lock:
@@ -24,6 +31,14 @@ async def run_cpu_bound(func: Callable, *args, **kwargs) -> Any:
     """
     Runs a CPU-bound function using Dask.
     Compatible with LangGraph (async) and Streamlit (multiple asyncio.run calls).
+
+    Args:
+        func (Callable): The function to execute.
+        *args: Variable length argument list for the function.
+        **kwargs: Arbitrary keyword arguments for the function.
+
+    Returns:
+        Any: The result of the function execution.
     """
     # Get the sync client in a thread-safe way
     client = await asyncio.to_thread(get_client)

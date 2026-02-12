@@ -1,3 +1,7 @@
+"""
+Vision pipeline module for processing images using Gemini.
+Handles ingredient extraction from uploaded photos.
+"""
 import os
 from google import genai
 from google.genai import types
@@ -12,7 +16,16 @@ from src.executor import run_cpu_bound
 from src.config import settings
 
 class VisionPipeline:
+    """
+    Pipeline for handling ingredient extraction from images using Gemini-2.0-flash.
+    """
     def __init__(self, api_key: str):
+        """
+        Initializes the VisionPipeline with a Gemini API key.
+
+        Args:
+            api_key (str): The Google Gemini API key.
+        """
         self.client = genai.Client(api_key=api_key)
         self.model_id = "gemini-2.0-flash"   # Multi-modal model
         self.confidence_threshold = settings.ingredient_confidence_threshold
@@ -25,6 +38,21 @@ class VisionPipeline:
         reraise=True
     )
     async def extract_ingredients(self, image: Image.Image, request_id: str) -> IngredientList:
+        """
+        Extracts a list of ingredients from a PIL Image.
+        Includes retry logic and confidence threshold filtering.
+
+        Args:
+            image (Image.Image): The PIL Image to process.
+            request_id (str): Unique request identifier for logging.
+
+        Returns:
+            IngredientList: A Pydantic model containing the extracted ingredients.
+
+        Raises:
+            AppVisionError: If the Gemini API fails or returns no content.
+            AppValidationError: If the returned data does not match the expected schema.
+        """
         logger = get_request_logger(request_id)
         logger.debug(f"ENTERING: extract_ingredients with request_id={request_id}")
         logger.info("Starting ingredient extraction from image")

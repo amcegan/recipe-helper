@@ -1,3 +1,7 @@
+"""
+Orchestration module defining the LangGraph workflow for recipe generation.
+Includes weather context fetching, ingredient extraction, and recipe suggestion nodes.
+"""
 from src.config import settings
 import httpx
 from datetime import datetime
@@ -15,7 +19,12 @@ from src.security import safe_error_message
 WEATHER_API_BASE_URL = "https://wttr.in"
 
 async def get_weather_context():
-    """Fetches weather context from wttr.in and current Dublin time."""
+    """
+    Fetches weather context from wttr.in and current Dublin time.
+
+    Returns:
+        str: A formatted string describing the current weather and time.
+    """
     city = settings.location_city
     
     # Weather API (wttr.in)
@@ -59,6 +68,16 @@ def process_image(b):
         return img
 
 async def extract_ingredients_node(state: RecipeState):
+    """
+    Node for extracting ingredients from an image.
+    Uses VisionPipeline to process the image and extract a list of ingredients.
+
+    Args:
+        state (RecipeState): The current graph state.
+
+    Returns:
+        dict: A dictionary containing the extracted ingredients or an error message.
+    """
     logger = get_request_logger(state['request_id'])
     logger.debug(f"ENTERING Node: extract_ingredients - Image type: {type(state.get('image'))}")
     
@@ -85,12 +104,32 @@ async def extract_ingredients_node(state: RecipeState):
         return {"error": safe_error_message(e)}
 
 async def check_weather_node(state: RecipeState):
+    """
+    Node for fetching current weather context.
+    Calls get_weather_context and updates the state with the context string.
+
+    Args:
+        state (RecipeState): The current graph state.
+
+    Returns:
+        dict: A dictionary containing the weather context string.
+    """
     logger = get_request_logger(state['request_id'])
     logger.debug("ENTERING Node: check_weather")
     context = await get_weather_context()
     return {"context": context}
 
 async def suggest_recipes_node(state: RecipeState):
+    """
+    Node for generating recipe suggestions.
+    Uses RecipePipeline to suggest recipes based on ingredients, preferences, and context.
+
+    Args:
+        state (RecipeState): The current graph state.
+
+    Returns:
+        dict: A dictionary containing the list of recipe suggestions or an error message.
+    """
     logger = get_request_logger(state['request_id'])
     logger.debug("ENTERING Node: suggest_recipes")
     
@@ -110,10 +149,30 @@ async def suggest_recipes_node(state: RecipeState):
         return {"error": safe_error_message(e)}
 
 async def human_review_node(state: RecipeState):
+    """
+    Node that serves as an interruption point for human review.
+    This node simply returns the current state and is meant to be interrupted.
+
+    Args:
+        state (RecipeState): The current graph state.
+
+    Returns:
+        RecipeState: The unchanged state.
+    """
     # This node will be interrupted.
     return state
 
 async def generate_final_recipe_node(state: RecipeState):
+    """
+    Node for generating a detailed final recipe.
+    Uses RecipePipeline to create a full recipe for the selected suggestion.
+
+    Args:
+        state (RecipeState): The current graph state.
+
+    Returns:
+        dict: A dictionary containing the final recipe object or an error message.
+    """
     logger = get_request_logger(state['request_id'])
     logger.debug("ENTERING Node: generate_final_recipe")
     
@@ -136,6 +195,13 @@ async def generate_final_recipe_node(state: RecipeState):
 # Build Graph
 
 def create_recipe_graph():
+    """
+    Constructs and compiles the recipe generation graph.
+    Defines the nodes, edges, and interruption points for the workflow.
+
+    Returns:
+        CompiledGraph: The compiled LangGraph workflow.
+    """
     workflow = StateGraph(RecipeState)
     
     workflow.add_node("extract_ingredients", extract_ingredients_node)

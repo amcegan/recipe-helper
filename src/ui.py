@@ -1,3 +1,7 @@
+"""
+Streamlit UI module for the Recipe Helper application.
+Handles file uploads, user interaction, and manages the LangGraph execution flow.
+"""
 import streamlit as st
 import uuid
 import asyncio
@@ -11,14 +15,32 @@ from src.graph import create_recipe_graph
 from src.security import safe_error_message
 
 def image_to_bytes(img):
-    """Helper for multiprocessing image conversion."""
+    """
+    Helper for multiprocessing image conversion.
+    Converts a PIL Image to PNG bytes.
+
+    Args:
+        img (Image.Image): The PIL Image to convert.
+
+    Returns:
+        bytes: The image data in PNG format.
+    """
     import io
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     return buf.getvalue()
 
 async def run_graph(graph, inputs, config, state_ref):
-    """Helper to run the graph asynchronously and update state."""
+    """
+    Helper to run the graph asynchronously and update state.
+    Iterates through graph events and merges results into a reference dictionary.
+
+    Args:
+        graph (CompiledGraph): The compiled LangGraph workflow.
+        inputs (dict or None): Initial inputs for the graph, or None when resuming.
+        config (dict): Configuration for the graph run (e.g., thread_id).
+        state_ref (dict): A reference to the state dictionary to update with results.
+    """
     try:
         async for event in graph.astream(inputs, config):
             node_name = next(iter(event))
@@ -27,6 +49,10 @@ async def run_graph(graph, inputs, config, state_ref):
         st.error(f"Graph Error: {safe_error_message(e)}")
 
 def render_ui():
+    """
+    Main function to render the Streamlit UI.
+    Sets up page config, manages session state, and handles the multi-step recipe generation workflow.
+    """
     st.set_page_config(page_title="Recipe Helper", page_icon="🍳", layout="wide")
     
     st.title("🍳 Recipe Helper")
