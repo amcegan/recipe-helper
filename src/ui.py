@@ -6,11 +6,7 @@ from src.vision import VisionPipeline
 from src.recipes import RecipePipeline
 from src.logger import get_request_logger
 from src.executor import run_cpu_bound
-import os
-from dotenv import load_dotenv, find_dotenv
-
-load_dotenv(find_dotenv())
-
+from src.config import settings
 from src.graph import create_recipe_graph
 
 def image_to_bytes(img):
@@ -56,10 +52,9 @@ def render_ui():
             "error": None
         }
 
-    api_key = os.getenv("GEMINI_API_KEY", "").strip()
-    if not api_key:
-        st.error("Missing GEMINI_API_KEY environment variable. Please set it in your .env file.")
-        return
+    # API Key is validated by Pydantic on Settings instantiation.
+    # If it's missing, the app will fail to start-up with a clear error.
+    api_key = settings.gemini_api_key
 
     st.header("1. Upload Ingredients")
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])

@@ -1,4 +1,4 @@
-import os
+from src.config import settings
 import httpx
 from datetime import datetime
 from typing import List, Optional
@@ -15,7 +15,7 @@ WEATHER_API_BASE_URL = "https://wttr.in"
 
 async def get_weather_context():
     """Fetches weather context from wttr.in and current Dublin time."""
-    city = os.getenv("LOCATION_CITY", "Dublin")
+    city = settings.location_city
     
     # Weather API (wttr.in)
     weather_desc = "mild weather"
@@ -65,7 +65,7 @@ async def extract_ingredients_node(state: RecipeState):
         logger.error(f"Image in state is not bytes! It is {type(state['image'])}")
         return {"error": f"Internal Error: Expected image bytes, got {type(state['image'])}"}
 
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = settings.gemini_api_key
     vision_pipeline = VisionPipeline(api_key)
     
     try:
@@ -90,7 +90,7 @@ async def suggest_recipes_node(state: RecipeState):
     logger = get_request_logger(state['request_id'])
     logger.debug("ENTERING Node: suggest_recipes")
     
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = settings.gemini_api_key
     recipe_pipeline = RecipePipeline(api_key)
     
     try:
@@ -113,7 +113,7 @@ async def generate_final_recipe_node(state: RecipeState):
     logger = get_request_logger(state['request_id'])
     logger.debug("ENTERING Node: generate_final_recipe")
     
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = settings.gemini_api_key
     recipe_pipeline = RecipePipeline(api_key)
     
     try:

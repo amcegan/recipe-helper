@@ -12,3 +12,4 @@ httpx==0.28.1
 dask==2026.1.2
 distributed==2026.1.2
 pytz==2025.2
+pytest-asyncio==0.25.3

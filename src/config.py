@@ -1,7 +1,7 @@
 import os
 from typing import Optional
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from pydantic import Field, validator
+from pydantic import Field, field_validator
 
 class Settings(BaseSettings):
     """
@@ -22,15 +22,17 @@ class Settings(BaseSettings):
     log_level: str = Field("INFO", alias="LOG_LEVEL")
     ingredient_confidence_threshold: float = Field(0.0, alias="INGREDIENT_CONFIDENCE_THRESHOLD")
 
-    @validator("log_level")
-    def validate_log_level(cls, v):
+    @field_validator("log_level")
+    @classmethod
+    def validate_log_level(cls, v: str) -> str:
         allowed = {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}
         if v.upper() not in allowed:
             return "INFO"
         return v.upper()
 
-    @validator("ingredient_confidence_threshold")
-    def validate_threshold(cls, v):
+    @field_validator("ingredient_confidence_threshold")
+    @classmethod
+    def validate_threshold(cls, v: float) -> float:
         if not 0.0 <= v <= 1.0:
             raise ValueError("INGREDIENT_CONFIDENCE_THRESHOLD must be between 0.0 and 1.0")
         return v
