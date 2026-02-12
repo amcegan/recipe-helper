@@ -38,10 +38,10 @@ class WeatherDesc(BaseModel):
 
 class CurrentCondition(BaseModel):
     temp_C: str
-    weatherDesc: List[WeatherDesc]
+    weatherDesc: List[WeatherDesc] = Field(..., min_length=1)
 
 class WeatherResponse(BaseModel):
-    current_condition: List[CurrentCondition]
+    current_condition: List[CurrentCondition] = Field(..., min_length=1)
 
 from typing import TypedDict, Annotated
 import operator

@@ -6,12 +6,9 @@ from src.vision import VisionPipeline
 from src.recipes import RecipePipeline
 from src.logger import get_request_logger
 from src.executor import run_cpu_bound
-import os
-from dotenv import load_dotenv, find_dotenv
-
-load_dotenv(find_dotenv())
-
+from src.config import settings
 from src.graph import create_recipe_graph
+from src.security import safe_error_message
 
 def image_to_bytes(img):
     """Helper for multiprocessing image conversion."""
@@ -27,7 +24,7 @@ async def run_graph(graph, inputs, config, state_ref):
             node_name = next(iter(event))
             state_ref.update(event[node_name])
     except Exception as e:
-        st.error(f"Graph Error: {e}")
+        st.error(f"Graph Error: {safe_error_message(e)}")
 
 def render_ui():
     st.set_page_config(page_title="Recipe Helper", page_icon="🍳", layout="wide")
@@ -56,10 +53,8 @@ def render_ui():
             "error": None
         }
 
-    api_key = os.getenv("GEMINI_API_KEY", "").strip()
-    if not api_key:
-        st.error("Missing GEMINI_API_KEY environment variable. Please set it in your .env file.")
-        return
+    # API Key is validated by Pydantic on Settings instantiation.
+    # If it's missing, the app will fail to start-up with a clear error.
 
     st.header("1. Upload Ingredients")
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
@@ -93,7 +88,8 @@ def render_ui():
     if st.session_state.graph_state.get("ingredients"):
         st.divider()
         st.header("2. Detected Ingredients")
-        for ing in st.session_state.graph_state["ingredients"]:
+        ingredients = st.session_state.graph_state.get("ingredients") or []
+        for ing in ingredients:
             confidence_color = "green" if ing.confidence > 0.8 else "orange" if ing.confidence > 0.5 else "red"
             st.markdown(f"- **{ing.name}** (Confidence: :{confidence_color}[{ing.confidence:.2f}])")
 
@@ -150,12 +146,14 @@ def render_ui():
         st.header(f"📖 Final Recipe: {recipe.title}")
         
         st.subheader("Ingredients")
-        for item in recipe.ingredients:
+        recipe_ingredients = recipe.ingredients or []
+        for item in recipe_ingredients:
             st.write(f"- {item}")
         st.info(f"**Cooking Time:** {recipe.cooking_time}")
 
         st.subheader("Instructions")
-        for i, step in enumerate(recipe.steps, 1):
+        recipe_steps = recipe.steps or []
+        for i, step in enumerate(recipe_steps, 1):
             st.write(f"{i}. {step}")
         
         if recipe.notes:

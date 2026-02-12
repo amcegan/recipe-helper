@@ -1,4 +1,4 @@
-import os
+from src.config import settings
 import httpx
 from datetime import datetime
 from typing import List, Optional
@@ -9,13 +9,14 @@ from src.schemas import RecipeState, IngredientList, RecipeSuggestionList, Final
 from src.logger import get_request_logger
 from src.exceptions import AppVisionError, AppRecipeError, AppValidationError
 from src.executor import run_cpu_bound
+from src.security import safe_error_message
 
 # Constants
 WEATHER_API_BASE_URL = "https://wttr.in"
 
 async def get_weather_context():
     """Fetches weather context from wttr.in and current Dublin time."""
-    city = os.getenv("LOCATION_CITY", "Dublin")
+    city = settings.location_city
     
     # Weather API (wttr.in)
     weather_desc = "mild weather"
@@ -26,11 +27,14 @@ async def get_weather_context():
             if response.status_code == 200:
                 # Validate with Pydantic
                 weather_data = await run_cpu_bound(WeatherResponse.model_validate, response.json())
-                current = weather_data.current_condition[0]
-                temp = current.temp_C
-                desc = current.weatherDesc[0].value.lower()
-                weather_desc = f"{temp} °C and {desc}"
-    except Exception:
+                if weather_data.current_condition:
+                    current = weather_data.current_condition[0]
+                    temp = current.temp_C
+                    desc = "mild"
+                    if current.weatherDesc:
+                        desc = current.weatherDesc[0].value.lower()
+                    weather_desc = f"{temp} °C and {desc}"
+    except Exception as e:
         # Fallback to defaults
         pass
 
@@ -65,7 +69,7 @@ async def extract_ingredients_node(state: RecipeState):
         logger.error(f"Image in state is not bytes! It is {type(state['image'])}")
         return {"error": f"Internal Error: Expected image bytes, got {type(state['image'])}"}
 
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = settings.gemini_api_key
     vision_pipeline = VisionPipeline(api_key)
     
     try:
@@ -77,8 +81,8 @@ async def extract_ingredients_node(state: RecipeState):
         # We null out the image to keep the checkpoint size small/serializable
         return {"ingredients": ingredients.ingredients, "image": None}
     except Exception as e:
-        logger.error(f"Error in extraction node: {e}")
-        return {"error": str(e)}
+        logger.error(f"Error in extraction node: {safe_error_message(e)}")
+        return {"error": safe_error_message(e)}
 
 async def check_weather_node(state: RecipeState):
     logger = get_request_logger(state['request_id'])
@@ -90,7 +94,7 @@ async def suggest_recipes_node(state: RecipeState):
     logger = get_request_logger(state['request_id'])
     logger.debug("ENTERING Node: suggest_recipes")
     
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = settings.gemini_api_key
     recipe_pipeline = RecipePipeline(api_key)
     
     try:
@@ -102,8 +106,8 @@ async def suggest_recipes_node(state: RecipeState):
         )
         return {"suggestions": suggestions.suggestions}
     except Exception as e:
-        logger.error(f"Error in suggestions node: {e}")
-        return {"error": str(e)}
+        logger.error(f"Error in suggestions node: {safe_error_message(e)}")
+        return {"error": safe_error_message(e)}
 
 async def human_review_node(state: RecipeState):
     # This node will be interrupted.
@@ -113,7 +117,7 @@ async def generate_final_recipe_node(state: RecipeState):
     logger = get_request_logger(state['request_id'])
     logger.debug("ENTERING Node: generate_final_recipe")
     
-    api_key = os.getenv("GEMINI_API_KEY")
+    api_key = settings.gemini_api_key
     recipe_pipeline = RecipePipeline(api_key)
     
     try:
@@ -126,8 +130,8 @@ async def generate_final_recipe_node(state: RecipeState):
         )
         return {"final_recipe": final_recipe}
     except Exception as e:
-        logger.error(f"Error in final recipe node: {e}")
-        return {"error": str(e)}
+        logger.error(f"Error in final recipe node: {safe_error_message(e)}")
+        return {"error": safe_error_message(e)}
 
 # Build Graph
 

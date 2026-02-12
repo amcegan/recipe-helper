@@ -28,6 +28,10 @@ You are building a modular, production-ready Python application that recommends 
     - Use Gemini to suggest 3-5 recipes based on ingredients, user preferences, and situational context.
     - Generate a high-quality final recipe with title, ingredients, steps, and chef's notes.
 
+6. **Centralized Configuration**
+    - Use `pydantic-settings` to manage environment variables (`GEMINI_API_KEY`, `LOCATION_CITY`, etc.) in a type-safe manner.
+    - Implement "fail-fast" validation to ensure the application does not start with invalid or missing critical secrets.
+
 ## Core Modules & Responsibilities
 
 - **`src/graph.py`**: The heart of the application. Defines the graph nodes, state schema, and compiles the workflow with appropriate interrupts.
@@ -37,14 +41,17 @@ You are building a modular, production-ready Python application that recommends 
 - **`src/prompts.py`**: Centralized module for all LLM prompts, ensuring separation of content and logic.
 - **`src/logger.py`**: Structured logging with session-based `request_id` tracking.
 - **`src/exceptions.py`**: Domain-specific error types for predictable failure handling.
+- **`src/config.py`**: Centralized configuration management using Pydantic-Settings.
 - **`src/ui.py`**: The Streamlit interface that drives the graph execution and manages state persistence across user sessions.
 
 ## Development Guidelines
 
-- **Validation First**: Every external API response (Gemini, Weather) must be validated immediately against a Pydantic model.
+- **Validation First**: Every external API response (Gemini, Weather) AND application configuration must be validated immediately.
+- **Fail Fast**: The application should fail on startup if required configuration is missing.
 - **Resilience**: Use `tenacity` for exponential backoff on all network calls.
 - **State Integrity**: Do not store non-serializable objects (like PIL Images) in the LangGraph state; convert to bytes and clear after use.
 - **Separation of Concerns**: Keep business logic in `src/` and presentation logic in `ui.py`.
+- **Security**: Mask known secrets in all error messages and logs shown in the UI. Never expose the full `settings` object to the frontend.
 - **Modularity**: Prompts should be templated and accept `ingredients`, `context`, and `preference` as variables.
 
 ## Security & Secrets

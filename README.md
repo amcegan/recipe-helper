@@ -1,5 +1,9 @@
 # Recipe Helper – AI‑Powered Recipe Recommendation System (LangGraph Edition)
 
+This project is mainly an exercise in using Google Antigravity as a code assistant. 
+98% of the code was written by the agent with the focus being on managing the agent through promting and agent rules e.g. coding standards.
+
+
 Recipe Helper is an AI‑powered culinary companion that turns photos of your pantry into delicious meal ideas. After implementing the core GenAI pipeline in Part A, this refactored version introduces **LangGraph** orchestration and **situational context** (weather and time) to satisfy the Part B learning challenge from the technical assessment. The application now executes as a stateful graph with human‑in‑the‑loop pauses and enriches model prompts with live weather data and the current time in Dublin.
 
 It demonstrates an end‑to‑end workflow using a vision‑capable large language model to extract ingredients from an image, reason about how the ingredients fit together, and synthesize an easy‑to‑follow recipe tailored to the user's preferences. The project emphasizes safety, reliability and clear separation of concerns so that the core services can be reused as a library or extended for future work.
@@ -100,7 +104,7 @@ Pausing before the suggestion and review nodes allows the UI to collect user inp
 
 ### Prerequisites
 
-1. **Python 3.9+**
+1. **Python 3.13+** (Optimized for the latest runtime features).
 
 2. **Google Gemini API Key** – sign up via Google AI Studio.
 
@@ -113,22 +117,33 @@ source venv/bin/activate  \# or \`venv\\Scripts\\activate\` on Windows
 
 1. **Install dependencies**:
 
-pip install \--upgrade pip  
-pip install \-r requirements.txt
+pip install --upgrade pip  
+pip install -r requirements.txt
+
+### Quick Start for Engineers
+```bash
+# Setup
+python3 -m venv venv && source venv/bin/activate
+pip install -r requirements.txt
+cp .env.example .env # Add your GEMINI_API_KEY
+
+# Run
+streamlit run main.py
+
+# Test
+PYTHONPATH=. GEMINI_API_KEY=fake_key ./venv/bin/pytest tests/
+```
 
 1. **Configure environment variables**:
 
 Copy .env.example to .env and set the following keys:
 
-* **GEMINI\_API\_KEY** – your Google Gemini API key.
+* **GEMINI\_API\_KEY** (Required) – your Google Gemini API key.
+* **LOCATION\_CITY** (Optional) – city for wttr.in weather look‑ups (default: Dublin).
+* **LOG\_LEVEL** (Optional) – DEBUG, INFO, WARNING, ERROR, CRITICAL (default: INFO).
+* **INGREDIENT\_CONFIDENCE\_THRESHOLD** (Optional) – float between 0.0 and 1.0 (default: 0.0).
 
-* **LOCATION\_CITY** (optional) – city for wttr.in weather look‑ups (default: Dublin).
-
-* **LOG\_LEVEL** (optional) – DEBUG for verbose logs or INFO for typical output.
-
-* **INGREDIENT\_CONFIDENCE\_THRESHOLD** (optional) – float between 0.0 and 1.0 to filter low‑confidence ingredient detections.
-
-Never commit your API keys to version control. The application uses python‑dotenv to load these values at runtime.
+The application uses **Pydantic-Settings** for centralized, type-safe configuration. It will perform "fail-fast" validation on startup to ensure all required environment variables are present and correctly typed.
 
 ## Running the Application
 
@@ -154,7 +169,7 @@ Unit tests cover the vision and recipe pipelines, validators and the new weather
 
 pytest tests/
 
-The tests mock external API calls so they do not require network access or valid API keys. They verify success paths, error handling, retry behaviour and the proper propagation of the context string through the graph.
+The project uses frozen dependencies in `requirements.txt` to ensure consistent behavior across all developer workstations.
 
 ## Technology Choices
 
@@ -179,24 +194,13 @@ The tests mock external API calls so they do not require network access or valid
 
 * **System Time Dependency:** The time is generated from the system's local clock so it is not ideal for production.
 
-<<<<<<< HEAD
-=======
-* **No persistence or personalisation:** Session data is stored in memory via Streamlit’s session state. A production service would persist user history, preferences and feedback in a database.
+* **No persistence or personalisation:** Session data is stored in memory via Streamlit’s session state. A production service would persist user history in a database.
+* **Single‑user concurrency:** Streamlit is not suited to high‑traffic scenarios. The core service layer could be exposed via a REST API for scalability.
+* **Partial test coverage:** More comprehensive end‑to‑end tests and performance benchmarks would be beneficial.
 
-* **Single‑user concurrency:** Streamlit’s single‑process nature means the app is not suited to high‑traffic scenarios. The core service layer could be exposed via a REST or gRPC API and the UI served separately for scalability.
+## Part B Refactor Reflection
 
-* **Partial test coverage:** While the unit tests cover critical functions, integration tests for the LangGraph orchestration and UI are limited. More comprehensive end‑to‑end tests and performance benchmarks would be beneficial.
-
-## Part B Reflection
-
-This project fulfills the "Learning & Exploration Challenge" of the technical interview assessment. 
-- **Google Antigravity**: While I had used this tool for small personal projects, this assessment allowed me to apply it to a production-like scenario.
-- **Gemini 2.0 Flash**: I chose this model to explore its **multimodal ease of use**, specifically how it simplifies architecture by handling both vision and complex reasoning in a single call with structured JSON output.
-- **LangGraph**: I had used LangGraph previously, but this project was my first opportunity to implement the newer **Human-in-the-Loop (HITL)** features, using interrupts to guide the user flow.
-
-See `LEARNING.md` for a deeper dive into these technical choices and the lessons learned.
-
->>>>>>> Part-B
+See `LEARNING.md` for a deeper dive.
 ## Edge Case Handling & Robustness
 
 The assessment requires demonstrating how the system handles failures and edge cases. This implementation addresses several robustness scenarios:
@@ -236,6 +240,10 @@ High‑level requirements
     * Organize code into discrete modules (vision.py, recipes.py, ui.py, schemas.py, validators.py, tests/…) and avoid putting business logic in main().
 5. Validation and testing
     * Use Pydantic models to enforce strict schemas. Reject and retry any LLM output that fails validation. Write unit tests with pytest, including edge cases (unknown ingredients, conflicting preferences, empty images). Log a unique request ID for every call.
+6. Centralized configuration
+    * Use `pydantic-settings` to manage all environment variables in a type-safe manner. Implement "fail-fast" validation to ensure the application does not start with invalid or missing critical secrets.
+7. Security and Secret Masking
+    * Never display raw exception strings or settings objects directly in the UI. Implement a security layer to mask sensitive information (like API keys) in error messages and logs.
 
 
 Prompting strategy and guard rails
@@ -317,5 +325,7 @@ Development Guideline
 * Use context managers to ensure resources are properly closed, preventing memory leaks.
 * Set token limits, temperature and safety settings on model calls.
 * Verify that response elements are valid against Pydantic models.
+* Centralize all configuration using a validated `Settings` object.
+* Sanitize all error messages displayed in the UI or logged to disk to prevent secret leakage (mask API keys).
 ```
 ---
