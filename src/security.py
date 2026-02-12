@@ -3,6 +3,7 @@ Security module for sanitizing sensitive data.
 Provides utilities for masking API keys and other secrets in logs and UI messages.
 """
 import re
+from typing import Optional
 from src.config import settings
 
 def mask_secrets(text: str) -> str:
@@ -53,3 +54,43 @@ def safe_error_message(e: Exception) -> str:
     """
     raw_msg = str(e)
     return mask_secrets(raw_msg)
+
+def sanitize_input(text: Optional[str], max_length: int = 500) -> str:
+    """
+    Sanitizes user input to prevent prompt injection and other security issues.
+    
+    Args:
+        text (Optional[str]): The raw user input.
+        max_length (int): Maximum allowed length for the input.
+        
+    Returns:
+        str: Sanitized and truncated string.
+    """
+    if not text:
+        return ""
+    
+    # 1. Basic cleaning
+    sanitized = text.strip()
+    
+    # 2. Prevent length-based attacks / DoS
+    sanitized = sanitized[:max_length]
+    
+    # 3. Sanitize delimiters commonly used in prompt construction (e.g. triple quotes)
+    sanitized = sanitized.replace('"""', "'''")
+    
+    # 4. Mitigation for common prompt injection keywords (case-insensitive)
+    # This is a basic heuristic; advanced cases are better handled by model guardrails.
+    forbidden_patterns = [
+        r"ignore previous instructions",
+        r"system:",
+        r"assistant:",
+        r"user:",
+        r"\.txt",
+        r"\.log",
+        r"cat /etc/passwd"
+    ]
+    
+    for pattern in forbidden_patterns:
+        sanitized = re.sub(pattern, "[REDACTED]", sanitized, flags=re.IGNORECASE)
+        
+    return sanitized

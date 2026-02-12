@@ -9,7 +9,7 @@ from src.schemas import Ingredient, RecipeSuggestionList, FinalRecipe
 from src.logger import get_request_logger, log_retry, log_entry_exit
 from src.prompts import RECIPE_SUGGESTION_PROMPT, FINAL_RECIPE_PROMPT
 from src.exceptions import AppRecipeError, AppValidationError
-from src.security import safe_error_message
+from src.security import safe_error_message, sanitize_input
 from src.executor import run_cpu_bound
 
 
@@ -52,13 +52,15 @@ class RecipePipeline:
             AppValidationError: If the returned data does not match the expected schema.
         """
         logger = get_request_logger(request_id)
-        logger.info("Generating recipe suggestions", preference=preference)
+        safe_pref = sanitize_input(preference)
+        safe_context = sanitize_input(context)
+        logger.info("Generating recipe suggestions", preference=safe_pref)
 
         ingredient_names = ", ".join([ing.name for ing in ingredients])
         prompt = RECIPE_SUGGESTION_PROMPT.format(
             ingredients=ingredient_names,
-            preference=preference or "None",
-            context=context or "No specific context available."
+            preference=safe_pref or "None",
+            context=safe_context or "No specific context available."
         )
 
         try:
@@ -121,14 +123,17 @@ class RecipePipeline:
             AppValidationError: If the returned data does not match the expected schema.
         """
         logger = get_request_logger(request_id)
-        logger.info("Generating final recipe", recipe_title=suggestion_title)
+        safe_title = sanitize_input(suggestion_title)
+        safe_pref = sanitize_input(preference)
+        safe_context = sanitize_input(context)
+        logger.info("Generating final recipe", recipe_title=safe_title)
 
         ingredient_names = ", ".join([ing.name for ing in ingredients])
         prompt = FINAL_RECIPE_PROMPT.format(
-            suggestion=suggestion_title,
+            suggestion=safe_title,
             ingredients=ingredient_names,
-            preference=preference or "None",
-            context=context or "No specific context available."
+            preference=safe_pref or "None",
+            context=safe_context or "No specific context available."
         )
 
         try:
