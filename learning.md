@@ -1,10 +1,10 @@
 # Learning & Exploration Reflection 
 
-This document captures the learning process, challenges and insights gained while refactoring the recipe helper project to satisfy the Part B “Learning & Exploration Challenge” of the technical assessment. I also mention what I learned from the Part A challenge though this does go against the instructions given.
+This document captures the learning process, challenges, and insights gained while refactoring the Recipe Helper project into a stateful **LangGraph** flow using **Google Antigravity**.
 
 ## Google Antigravity
 
-While I had used **Google Antigravity** in the past month for small personal projects, I had not yet used it for a serious, production-style application. This assessment provided the perfect opportunity to deepen that knowledge.
+While I had used **Google Antigravity** in the past month for small personal projects, I had not yet used it for a serious, production-style application. This project provided the perfect opportunity to deepen that knowledge.
 Antigravity is an excellent tool for code generation and refactoring. Any issues I had were due to poor prompting on my behalf; I would highly recommend.
 Antigravity was excellent in solving the bugs/issue (see: Challenges Encountered section), providing excellent educational feedback on the code and refactoring suggestions that I just had to accept. Antigravity provides a full markdown report of the changes it made, which is very helpful for learning.
 
@@ -19,7 +19,7 @@ Additionally, this was my first time using the Gemini 2.0 Flash model. I wanted 
 
 I have used LangGraph in previous projects, but I had strictly used its older version, for multi-step workflows. I had **not** yet utilized the newer **Human-in-the-Loop (HITL)** capabilities, which unsurprisingly needs a UI. It was a great learning experience as I had not foreseen the complexity it necessarily brought to the UI code.
 
-To satisfy the agent-framework challenge learning aspect, I refactored the linear pipeline into a stateful graph. As well as the aforementioned UI learnings, the other features/experiences worth mentioning are:
+To explore agent-style orchestration, I refactored the linear pipeline into a stateful graph. As well as the aforementioned UI learnings, the other features/experiences worth mentioning are:
 
 *   **Interrupts**: Pausing the graph to let the user review ingredients *before* generation, and selecting a recipe *before* finalization.
 *   **State Persistence**: Using `MemorySaver` to hold the application state while waiting for user input.
