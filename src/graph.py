@@ -9,6 +9,7 @@ from src.schemas import RecipeState, IngredientList, RecipeSuggestionList, Final
 from src.logger import get_request_logger
 from src.exceptions import AppVisionError, AppRecipeError, AppValidationError
 from src.executor import run_cpu_bound
+from src.security import safe_error_message
 
 # Constants
 WEATHER_API_BASE_URL = "https://wttr.in"
@@ -77,8 +78,8 @@ async def extract_ingredients_node(state: RecipeState):
         # We null out the image to keep the checkpoint size small/serializable
         return {"ingredients": ingredients.ingredients, "image": None}
     except Exception as e:
-        logger.error(f"Error in extraction node: {e}")
-        return {"error": str(e)}
+        logger.error(f"Error in extraction node: {safe_error_message(e)}")
+        return {"error": safe_error_message(e)}
 
 async def check_weather_node(state: RecipeState):
     logger = get_request_logger(state['request_id'])
@@ -102,8 +103,8 @@ async def suggest_recipes_node(state: RecipeState):
         )
         return {"suggestions": suggestions.suggestions}
     except Exception as e:
-        logger.error(f"Error in suggestions node: {e}")
-        return {"error": str(e)}
+        logger.error(f"Error in suggestions node: {safe_error_message(e)}")
+        return {"error": safe_error_message(e)}
 
 async def human_review_node(state: RecipeState):
     # This node will be interrupted.
@@ -126,8 +127,8 @@ async def generate_final_recipe_node(state: RecipeState):
         )
         return {"final_recipe": final_recipe}
     except Exception as e:
-        logger.error(f"Error in final recipe node: {e}")
-        return {"error": str(e)}
+        logger.error(f"Error in final recipe node: {safe_error_message(e)}")
+        return {"error": safe_error_message(e)}
 
 # Build Graph
 

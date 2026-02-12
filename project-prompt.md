@@ -51,6 +51,7 @@ You are building a modular, production-ready Python application that recommends 
 - **Resilience**: Use `tenacity` for exponential backoff on all network calls.
 - **State Integrity**: Do not store non-serializable objects (like PIL Images) in the LangGraph state; convert to bytes and clear after use.
 - **Separation of Concerns**: Keep business logic in `src/` and presentation logic in `ui.py`.
+- **Security**: Mask known secrets in all error messages and logs shown in the UI. Never expose the full `settings` object to the frontend.
 - **Modularity**: Prompts should be templated and accept `ingredients`, `context`, and `preference` as variables.
 
 ## Security & Secrets

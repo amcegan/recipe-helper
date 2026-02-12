@@ -2,6 +2,7 @@ import logging
 import uuid
 from typing import Optional
 from src.config import settings
+from src.security import safe_error_message
 
 def setup_logger(name: str = "recipe_helper") -> logging.Logger:
     """Sets up a logger with a consistent format and unique request IDs."""
@@ -43,6 +44,7 @@ def log_retry(retry_state):
     logger = get_request_logger(request_id)
     attempt_num = retry_state.attempt_number
     exception = retry_state.outcome.exception()
+    safe_exception_msg = safe_error_message(exception)
     next_step = f"retrying in {retry_state.next_action.sleep}s" if retry_state.next_action else "final attempt failed"
     
-    logger.warning(f"Retry attempt {attempt_num} failed: {exception}. {next_step}")
+    logger.warning(f"Retry attempt {attempt_num} failed: {safe_exception_msg}. {next_step}")

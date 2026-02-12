@@ -242,6 +242,8 @@ High‑level requirements
     * Use Pydantic models to enforce strict schemas. Reject and retry any LLM output that fails validation. Write unit tests with pytest, including edge cases (unknown ingredients, conflicting preferences, empty images). Log a unique request ID for every call.
 6. Centralized configuration
     * Use `pydantic-settings` to manage all environment variables in a type-safe manner. Implement "fail-fast" validation to ensure the application does not start with invalid or missing critical secrets.
+7. Security and Secret Masking
+    * Never display raw exception strings or settings objects directly in the UI. Implement a security layer to mask sensitive information (like API keys) in error messages and logs.
 
 
 Prompting strategy and guard rails
@@ -324,5 +326,6 @@ Development Guideline
 * Set token limits, temperature and safety settings on model calls.
 * Verify that response elements are valid against Pydantic models.
 * Centralize all configuration using a validated `Settings` object.
+* Sanitize all error messages displayed in the UI or logged to disk to prevent secret leakage (mask API keys).
 ```
 ---

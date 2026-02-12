@@ -8,6 +8,7 @@ from src.logger import get_request_logger
 from src.executor import run_cpu_bound
 from src.config import settings
 from src.graph import create_recipe_graph
+from src.security import safe_error_message
 
 def image_to_bytes(img):
     """Helper for multiprocessing image conversion."""
@@ -23,7 +24,7 @@ async def run_graph(graph, inputs, config, state_ref):
             node_name = next(iter(event))
             state_ref.update(event[node_name])
     except Exception as e:
-        st.error(f"Graph Error: {e}")
+        st.error(f"Graph Error: {safe_error_message(e)}")
 
 def render_ui():
     st.set_page_config(page_title="Recipe Helper", page_icon="🍳", layout="wide")
@@ -54,7 +55,6 @@ def render_ui():
 
     # API Key is validated by Pydantic on Settings instantiation.
     # If it's missing, the app will fail to start-up with a clear error.
-    api_key = settings.gemini_api_key
 
     st.header("1. Upload Ingredients")
     uploaded_file = st.file_uploader("Choose an image...", type=["jpg", "jpeg", "png"])
