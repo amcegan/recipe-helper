@@ -8,6 +8,16 @@ Recipe Helper is an AI-powered culinary companion that turns photos of your pant
 
 It demonstrates an end‑to‑end workflow using a vision‑capable large language model to extract ingredients from an image, reason about how the ingredients fit together, and synthesize an easy‑to‑follow recipe tailored to the user's preferences. The project emphasizes safety, reliability and clear separation of concerns so that the core services can be reused as a library or extended for future work.
 
+## Project Context & Evolution
+
+To fully understand the architecture and engineering decisions behind this project, we recommend reviewing the following documents:
+
+*   **[project-prompt.md](project-prompt.md)**: The original "AI Blueprint" used to scaffold and build this application. It details the module responsibilities, security requirements, and the explicit prompting strategies used for the Gemini pipelines.
+*   **[learning.md](learning.md)**: A collection of technical reflections on the LangGraph refactor. It documents the challenges of state serialization, human-in-the-loop implementation, and insights gained during the architectural evolution.
+*   **[CHANGELOG.md](CHANGELOG.md)**: A chronological record of major features, security enhancements, and refactoring milestones.
+
+---
+
 ## Documentation Map
 
 | File | Audience | Purpose |
