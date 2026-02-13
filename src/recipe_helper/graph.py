@@ -2,18 +2,18 @@
 Orchestration module defining the LangGraph workflow for recipe generation.
 Includes weather context fetching, ingredient extraction, and recipe suggestion nodes.
 """
-from src.config import settings
+from recipe_helper.config import settings
 import httpx
 from datetime import datetime
 from typing import List, Optional
 from langgraph.graph import StateGraph, START, END
-from src.vision import VisionPipeline
-from src.recipes import RecipePipeline
-from src.schemas import RecipeState, IngredientList, RecipeSuggestionList, FinalRecipe, WeatherResponse
-from src.logger import get_request_logger, log_entry_exit
-from src.exceptions import AppVisionError, AppRecipeError, AppValidationError
-from src.executor import run_cpu_bound
-from src.security import safe_error_message
+from recipe_helper.vision import VisionPipeline
+from recipe_helper.recipes import RecipePipeline
+from recipe_helper.schemas import RecipeState, IngredientList, RecipeSuggestionList, FinalRecipe, WeatherResponse
+from recipe_helper.logger import get_request_logger, log_entry_exit
+from recipe_helper.exceptions import AppVisionError, AppRecipeError, AppValidationError
+from recipe_helper.executor import run_cpu_bound
+from recipe_helper.security import safe_error_message
 
 # Constants
 WEATHER_API_BASE_URL = "https://wttr.in"

@@ -1,8 +1,8 @@
 import pytest
 from unittest.mock import AsyncMock, MagicMock, patch
-from src.recipes import RecipePipeline
-from src.schemas import RecipeSuggestionList, RecipeSuggestion, FinalRecipe, Ingredient
-from src.exceptions import AppRecipeError, AppValidationError
+from recipe_helper.recipes import RecipePipeline
+from recipe_helper.schemas import RecipeSuggestionList, RecipeSuggestion, FinalRecipe, Ingredient
+from recipe_helper.exceptions import AppRecipeError, AppValidationError
 
 @pytest.fixture
 def recipe_pipeline():
@@ -91,7 +91,7 @@ async def test_suggest_recipes_retry_success(recipe_pipeline):
         
         ingredients = [Ingredient(name="lettuce", confidence=1.0)]
         # Reduce retry wait for tests
-        with patch('src.recipes.wait_exponential', return_value=pytest.importorskip("tenacity").wait_none()):
+        with patch('recipe_helper.recipes.wait_exponential', return_value=pytest.importorskip("tenacity").wait_none()):
             result = await recipe_pipeline.suggest_recipes(ingredients, "healthy", "fake_context", "test_id")
             
             assert mock_gen.call_count == 2
@@ -104,7 +104,7 @@ async def test_suggest_recipes_all_retries_fail(recipe_pipeline):
         
         ingredients = [Ingredient(name="lettuce", confidence=1.0)]
         # Reduce retry wait for tests
-        with patch('src.recipes.wait_exponential', return_value=pytest.importorskip("tenacity").wait_none()):
+        with patch('recipe_helper.recipes.wait_exponential', return_value=pytest.importorskip("tenacity").wait_none()):
             with pytest.raises(AppRecipeError):
                 await recipe_pipeline.suggest_recipes(ingredients, "healthy", "fake_context", "test_id")
             

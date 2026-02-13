@@ -1,6 +1,6 @@
 import pytest
-from src.security import mask_secrets, safe_error_message
-from src.config import settings
+from recipe_helper.security import mask_secrets, safe_error_message
+from recipe_helper.config import settings
 from unittest.mock import patch
 
 def test_mask_secrets_no_secret():

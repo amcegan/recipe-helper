@@ -147,14 +147,17 @@ pip install -r requirements.txt
 ```bash
 # Setup
 python3 -m venv venv && source venv/bin/activate
-pip install -r requirements.txt
+pip install -e .
 cp .env.example .env # Add your GEMINI_API_KEY
 
-# Run
-streamlit run main.py
+# Run UI
+recipe-helper-ui
+
+# Run Graph CLI (Optional)
+recipe-helper-graph
 
 # Test
-PYTHONPATH=. GEMINI_API_KEY=fake_key ./venv/bin/pytest tests/
+pytest tests/
 ```
 
 1. **Configure environment variables**:
@@ -170,9 +173,9 @@ The application uses **Pydantic-Settings** for centralized, type-safe configurat
 
 ## Running the Application
 
-Run the Streamlit server from the project root:
+Run the Streamlit UI from anywhere in the virtual environment:
 
-streamlit run main.py
+recipe-helper-ui
 
 The flow is:
 
@@ -271,13 +274,17 @@ High‑level requirements
 3. Recipe generation pipeline
     * Given the validated ingredient list and the, optional, user’s preference, generate several recipe suggestions. Let the user choose one and produce a detailed final recipe.
 4. Modular architecture
-    * Organize code into discrete modules (vision.py, recipes.py, ui.py, schemas.py, validators.py, tests/…) and avoid putting business logic in main().
+    * Organize code into discrete modules within `src/recipe_helper/` (vision.py, recipes.py, ui/app.py, schemas.py, validators.py, ...) and avoid putting business logic in main().
 5. Validation and testing
     * Use Pydantic models to enforce strict schemas. Reject and retry any LLM output that fails validation. Write unit tests with pytest, including edge cases (unknown ingredients, conflicting preferences, empty images). Log a unique request ID for every call.
 6. Centralized configuration
     * Use `pydantic-settings` to manage all environment variables in a type-safe manner. Implement "fail-fast" validation to ensure the application does not start with invalid or missing critical secrets.
 7. Security and Secret Masking
     * Never display raw exception strings or settings objects directly in the UI. Implement a security layer to mask sensitive information (like API keys) in error messages and logs.
+8. Python Package Structure
+    * Organize as a strict Python package (`recipe_helper`) with a `pyproject.toml` configuration.
+    * Expose CLI entry points for the UI (`recipe-helper-ui`) and the graph runner (`recipe-helper-graph`).
+    * Source code must reside in `src/recipe_helper`.
 
 
 Prompting strategy and guard rails

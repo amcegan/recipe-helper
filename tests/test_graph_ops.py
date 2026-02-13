@@ -2,8 +2,8 @@ import pytest
 import asyncio
 from unittest.mock import patch, MagicMock, AsyncMock
 from datetime import datetime
-from src.graph import get_weather_context, create_recipe_graph, check_weather_node
-from src.schemas import RecipeState
+from recipe_helper.graph import get_weather_context, create_recipe_graph, check_weather_node
+from recipe_helper.schemas import RecipeState
 
 @pytest.mark.asyncio
 async def test_get_weather_context_success():
@@ -23,12 +23,12 @@ async def test_get_weather_context_success():
     
     with patch("httpx.AsyncClient", return_value=mock_client):
         # Mock datetime to ensure consistent time in output
-        with patch('src.graph.datetime') as mock_datetime:
+        with patch('recipe_helper.graph.datetime') as mock_datetime:
             mock_now = datetime(2023, 10, 27, 14, 30) # 2:30 PM
             mock_datetime.now.return_value = mock_now
             
             # Mock settings for city
-            with patch('src.graph.settings') as mock_settings:
+            with patch('recipe_helper.graph.settings') as mock_settings:
                 mock_settings.location_city = "Cork"
                 
                 context = await get_weather_context()
@@ -46,11 +46,11 @@ async def test_get_weather_context_api_failure():
     mock_client.get.side_effect = Exception("API Down")
     
     with patch("httpx.AsyncClient", return_value=mock_client):
-        with patch('src.graph.datetime') as mock_datetime:
+        with patch('recipe_helper.graph.datetime') as mock_datetime:
             mock_now = datetime(2023, 10, 27, 9, 0) # 9:00 AM
             mock_datetime.now.return_value = mock_now
             
-            with patch('src.graph.settings') as mock_settings:
+            with patch('recipe_helper.graph.settings') as mock_settings:
                 mock_settings.location_city = "Dublin"
                 
                 context = await get_weather_context()
@@ -62,7 +62,7 @@ async def test_get_weather_context_api_failure():
 
 @pytest.mark.asyncio
 async def test_check_weather_node():
-    with patch('src.graph.get_weather_context', new_callable=AsyncMock) as mock_get_context:
+    with patch('recipe_helper.graph.get_weather_context', new_callable=AsyncMock) as mock_get_context:
         mock_get_context.return_value = "It is raining"
         state = {"request_id": "test_id"}
         

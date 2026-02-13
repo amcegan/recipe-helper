@@ -12,8 +12,8 @@ def mock_run_cpu_bound():
         return func(*args, **kwargs)
     
     # We patch it in the modules where it is imported
-    with patch("src.vision.run_cpu_bound", side_effect=mock_run), \
-         patch("src.recipes.run_cpu_bound", side_effect=mock_run), \
-         patch("src.graph.run_cpu_bound", side_effect=mock_run), \
-         patch("src.ui.run_cpu_bound", side_effect=mock_run):
+    with patch("recipe_helper.vision.run_cpu_bound", side_effect=mock_run), \
+         patch("recipe_helper.recipes.run_cpu_bound", side_effect=mock_run), \
+         patch("recipe_helper.graph.run_cpu_bound", side_effect=mock_run), \
+         patch("recipe_helper.ui.app.run_cpu_bound", side_effect=mock_run):
         yield

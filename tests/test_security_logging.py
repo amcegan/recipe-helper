@@ -1,9 +1,9 @@
 import pytest
 import asyncio
 from unittest.mock import MagicMock, patch
-from src.security import mask_secrets, safe_error_message, sanitize_input
-from src.logger import log_entry_exit
-from src.config import settings
+from recipe_helper.security import mask_secrets, safe_error_message, sanitize_input
+from recipe_helper.logger import log_entry_exit
+from recipe_helper.config import settings
 
 def test_mask_secrets_multiple():
     """Verify that multiple sensitive fields from settings are masked."""
@@ -17,7 +17,7 @@ def test_mask_secrets_multiple():
     }
     mock_settings.model_dump.return_value = mock_settings.dict.return_value
     
-    with patch('src.security.settings', mock_settings):
+    with patch('recipe_helper.security.settings', mock_settings):
         text = "My keys are secret_gemini_key and some_other_key in my_secret_group."
         masked = mask_secrets(text)
         assert "secret_gemini_key" not in masked

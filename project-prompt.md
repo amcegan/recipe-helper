@@ -32,17 +32,24 @@ You are building a modular, production-ready Python application that recommends 
     - Use `pydantic-settings` to manage environment variables (`GEMINI_API_KEY`, `LOCATION_CITY`, etc.) in a type-safe manner.
     - Implement "fail-fast" validation to ensure the application does not start with invalid or missing critical secrets.
 
+7. **Python Package Structure**
+    - Organize as a strict Python package (`recipe_helper`) with a `pyproject.toml` configuration.
+    - Expose CLI entry points for the UI (`recipe-helper-ui`) and the graph runner (`recipe-helper-graph`).
+    - Source code must reside in `src/recipe_helper`.
+
 ## Core Modules & Responsibilities
 
-- **`src/graph.py`**: The heart of the application. Defines the graph nodes, state schema, and compiles the workflow with appropriate interrupts.
-- **`src/vision.py`**: Encapsulates all vision-related logic and Gemini Vision API interactions.
-- **`src/recipes.py`**: Handles text-based Gemini calls for recipe suggestions and final recipe expansion.
-- **`src/schemas.py`**: Central repository for all Pydantic models (Ingredients, Recipes, Weather) and the `RecipeState` TypedDict.
-- **`src/prompts.py`**: Centralized module for all LLM prompts, ensuring separation of content and logic.
-- **`src/logger.py`**: Structured logging with session-based `request_id` tracking.
-- **`src/exceptions.py`**: Domain-specific error types for predictable failure handling.
-- **`src/config.py`**: Centralized configuration management using Pydantic-Settings.
-- **`src/ui.py`**: The Streamlit interface that drives the graph execution and manages state persistence across user sessions.
+- **`src/recipe_helper/graph.py`**: The heart of the application. Defines the graph nodes, state schema, and compiles the workflow with appropriate interrupts.
+- **`src/recipe_helper/vision.py`**: Encapsulates all vision-related logic and Gemini Vision API interactions.
+- **`src/recipe_helper/recipes.py`**: Handles text-based Gemini calls for recipe suggestions and final recipe expansion.
+- **`src/recipe_helper/schemas.py`**: Central repository for all Pydantic models (Ingredients, Recipes, Weather) and the `RecipeState` TypedDict.
+- **`src/recipe_helper/prompts.py`**: Centralized module for all LLM prompts, ensuring separation of content and logic.
+- **`src/recipe_helper/logger.py`**: Structured logging with session-based `request_id` tracking.
+- **`src/recipe_helper/exceptions.py`**: Domain-specific error types for predictable failure handling.
+- **`src/recipe_helper/config.py`**: Centralized configuration management using Pydantic-Settings.
+- **`src/recipe_helper/ui/app.py`**: The Streamlit interface that drives the graph execution and manages state persistence across user sessions.
+- **`pyproject.toml`**: Defines the project metadata, dependencies, and CLI entry points.
+- **`src/recipe_helper/cli/`**: Contains the CLI entry point scripts.
 
 ## Development Guidelines
 
