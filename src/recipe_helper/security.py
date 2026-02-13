@@ -4,7 +4,7 @@ Provides utilities for masking API keys and other secrets in logs and UI message
 """
 import re
 from typing import Optional
-from src.config import settings
+from recipe_helper.config import settings
 
 def mask_secrets(text: str) -> str:
     """

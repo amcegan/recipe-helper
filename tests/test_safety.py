@@ -1,8 +1,8 @@
 import pytest
 import httpx
 from pydantic import ValidationError
-from src.schemas import WeatherResponse, CurrentCondition, WeatherDesc
-from src.graph import get_weather_context
+from recipe_helper.schemas import WeatherResponse, CurrentCondition, WeatherDesc
+from recipe_helper.graph import get_weather_context
 from unittest.mock import AsyncMock, patch, MagicMock
 
 def test_weather_response_validation_empty_lists():
@@ -50,7 +50,7 @@ async def test_get_weather_context_partial_data():
         mock_client.__aenter__.return_value = mock_client
         mock_client.get = AsyncMock(return_value=mock_response)
         
-        from src.schemas import WeatherResponse
+        from recipe_helper.schemas import WeatherResponse
         # Use model_construct to bypass validation for the mock return value
         valid_response = WeatherResponse.model_construct(**fake_data)
         
@@ -59,7 +59,7 @@ async def test_get_weather_context_partial_data():
         async def mock_run_override(*args, **kwargs):
             return valid_response
             
-        with patch("src.graph.run_cpu_bound", side_effect=mock_run_override):
+        with patch("recipe_helper.graph.run_cpu_bound", side_effect=mock_run_override):
             context = await get_weather_context()
             # If it works, it should contain "15 °C"
             assert "15 °C" in context

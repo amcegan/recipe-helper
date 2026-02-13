@@ -1,6 +1,6 @@
 import pytest
 from pydantic import BaseModel
-from src.validators import validate_llm_json
+from recipe_helper.validators import validate_llm_json
 
 # Minimal schema for testing
 class UserSchema(BaseModel):

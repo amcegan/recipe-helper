@@ -5,8 +5,8 @@ import functools
 import time
 from typing import Optional, Any, Callable
 import structlog
-from src.config import settings
-from src.security import safe_error_message
+from recipe_helper.config import settings
+from recipe_helper.security import safe_error_message
 
 # Shared request ID context
 from structlog.contextvars import bind_contextvars, clear_contextvars, get_contextvars

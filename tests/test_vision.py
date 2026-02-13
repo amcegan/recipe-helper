@@ -1,9 +1,9 @@
 import pytest
 import asyncio
 from unittest.mock import AsyncMock, MagicMock, patch
-from src.vision import VisionPipeline
-from src.schemas import IngredientList, Ingredient
-from src.exceptions import AppVisionError, AppValidationError
+from recipe_helper.vision import VisionPipeline
+from recipe_helper.schemas import IngredientList, Ingredient
+from recipe_helper.exceptions import AppVisionError, AppValidationError
 from PIL import Image
 
 @pytest.fixture
@@ -56,7 +56,7 @@ async def test_extract_ingredients_retry_success(vision_pipeline):
         
         img = Image.new('RGB', (100, 100))
         # Reduce retry wait for tests
-        with patch('src.vision.wait_exponential', return_value=pytest.importorskip("tenacity").wait_none()):
+        with patch('recipe_helper.vision.wait_exponential', return_value=pytest.importorskip("tenacity").wait_none()):
             result = await vision_pipeline.extract_ingredients(img, "test_id")
             
             assert mock_gen.call_count == 2
@@ -86,7 +86,7 @@ async def test_extract_ingredients_all_retries_fail(vision_pipeline):
         
         img = Image.new('RGB', (100, 100))
         # Reduce retry wait for tests
-        with patch('src.vision.wait_exponential', return_value=pytest.importorskip("tenacity").wait_none()):
+        with patch('recipe_helper.vision.wait_exponential', return_value=pytest.importorskip("tenacity").wait_none()):
             with pytest.raises(AppVisionError):
                 await vision_pipeline.extract_ingredients(img, "test_id")
             

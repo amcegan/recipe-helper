@@ -5,7 +5,7 @@ to confirm they are executed in parallel.
 """
 import asyncio
 import time
-from src.executor import run_cpu_bound
+from recipe_helper.executor import run_cpu_bound
 
 def cpu_heavy_task(name: str, duration: int) -> str:
     """

@@ -5,12 +5,12 @@ from google import genai
 from google.genai import types
 from tenacity import retry, stop_after_attempt, wait_exponential
 from typing import List, Optional
-from src.schemas import Ingredient, RecipeSuggestionList, FinalRecipe
-from src.logger import get_request_logger, log_retry, log_entry_exit
-from src.prompts import RECIPE_SUGGESTION_PROMPT, FINAL_RECIPE_PROMPT
-from src.exceptions import AppRecipeError, AppValidationError
-from src.security import safe_error_message, sanitize_input
-from src.executor import run_cpu_bound
+from recipe_helper.schemas import Ingredient, RecipeSuggestionList, FinalRecipe
+from recipe_helper.logger import get_request_logger, log_retry, log_entry_exit
+from recipe_helper.prompts import RECIPE_SUGGESTION_PROMPT, FINAL_RECIPE_PROMPT
+from recipe_helper.exceptions import AppRecipeError, AppValidationError
+from recipe_helper.security import safe_error_message, sanitize_input
+from recipe_helper.executor import run_cpu_bound
 
 
 class RecipePipeline:

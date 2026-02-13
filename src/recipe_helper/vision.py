@@ -8,13 +8,13 @@ from google.genai import types
 from tenacity import retry, stop_after_attempt, wait_exponential
 from PIL import Image
 from typing import List
-from src.schemas import IngredientList
-from src.logger import get_request_logger, log_retry, log_entry_exit
-from src.prompts import INGREDIENT_EXTRACTION_PROMPT
-from src.exceptions import AppVisionError, AppValidationError
-from src.security import safe_error_message
-from src.executor import run_cpu_bound
-from src.config import settings
+from recipe_helper.schemas import IngredientList
+from recipe_helper.logger import get_request_logger, log_retry, log_entry_exit
+from recipe_helper.prompts import INGREDIENT_EXTRACTION_PROMPT
+from recipe_helper.exceptions import AppVisionError, AppValidationError
+from recipe_helper.security import safe_error_message
+from recipe_helper.executor import run_cpu_bound
+from recipe_helper.config import settings
 
 class VisionPipeline:
     """

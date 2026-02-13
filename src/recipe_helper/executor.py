@@ -6,7 +6,7 @@ import asyncio
 import threading
 from concurrent.futures import ProcessPoolExecutor
 from typing import Callable, Any
-from src.logger import log_entry_exit
+from recipe_helper.logger import log_entry_exit
 
 _executor = None
 _executor_lock = threading.Lock()

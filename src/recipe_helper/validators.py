@@ -1,8 +1,8 @@
 import json
 from typing import Type, TypeVar, Any
 from pydantic import BaseModel, ValidationError
-from src.logger import get_request_logger
-from src.exceptions import AppValidationError
+from recipe_helper.logger import get_request_logger
+from recipe_helper.exceptions import AppValidationError
 
 T = TypeVar("T", bound=BaseModel)
 

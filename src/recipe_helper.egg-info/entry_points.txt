@@ -1,0 +1,3 @@
+[console_scripts]
+recipe-helper-graph = recipe_helper.cli.graph_cli:main
+recipe-helper-ui = recipe_helper.cli.ui_cli:main

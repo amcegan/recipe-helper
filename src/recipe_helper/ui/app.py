@@ -6,13 +6,13 @@ import streamlit as st
 import uuid
 import asyncio
 from PIL import Image
-from src.vision import VisionPipeline
-from src.recipes import RecipePipeline
-from src.logger import get_request_logger, setup_logger, log_entry_exit
-from src.executor import run_cpu_bound
-from src.config import settings
-from src.graph import create_recipe_graph, get_initial_state, update_user_preference, update_selected_recipe
-from src.security import safe_error_message
+from recipe_helper.vision import VisionPipeline
+from recipe_helper.recipes import RecipePipeline
+from recipe_helper.logger import get_request_logger, setup_logger, log_entry_exit
+from recipe_helper.executor import run_cpu_bound
+from recipe_helper.config import settings
+from recipe_helper.graph import create_recipe_graph, get_initial_state, update_user_preference, update_selected_recipe
+from recipe_helper.security import safe_error_message
 
 def image_to_bytes(img):
     """
@@ -180,3 +180,6 @@ def render_ui():
             st.write(recipe.notes)
     
 
+
+if __name__ == "__main__":
+    render_ui()
